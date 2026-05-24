@@ -61,9 +61,15 @@ router.post("/auth/register", async (req, res) => {
       });
 
     req.session.user = user;
-    req.session.save((err) => {
+    req.session.save(async (err) => {
       if (err) {
         req.log.error({ err }, "Session save error during registration");
+        // Delete the user we just inserted so it doesn't become a ghost account
+        try {
+          await db.delete(usersTable).where(eq(usersTable.id, user!.id));
+        } catch (delErr) {
+          req.log.error({ delErr }, "Failed to rollback user insert");
+        }
         res.status(500).json({ error: "Registration failed. Please try again." });
         return;
       }
