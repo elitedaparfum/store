@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useParams } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Upload, X, Loader2, Check, Plus, Star, ChevronUp, ChevronDown, Image as ImageIcon } from "lucide-react";
-import { apiUrl } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 const FAMILIES = ["Oriental", "Floral", "Woody", "Fresh", "Citrus", "Aquatic", "Gourmand", "Aromatic"];
 const GENDERS = ["Unisex", "Men", "Women"];
@@ -57,9 +57,8 @@ export default function ProductForm() {
   useEffect(() => {
     if (!isEdit || !id) return;
     setFetching(true);
-    fetch(apiUrl(`/api/products/${id}`), { credentials: "include" })
-      .then(r => r.json())
-      .then((data: { product: any }) => {
+    apiFetch(`/api/products/${id}`)
+      .then((data: any) => {
         const p = data.product;
         setForm({
           name: p.name ?? "",
@@ -185,11 +184,9 @@ export default function ProductForm() {
       fd.append("existingImages", JSON.stringify(existingUrls));
       newFiles.forEach(({ file }) => fd.append("newImages", file));
 
-      const url = isEdit ? apiUrl(`/api/products/${id}`) : apiUrl("/api/products");
+      const url = isEdit ? `/api/products/${id}` : "/api/products";
       const method = isEdit ? "PUT" : "POST";
-      const res = await fetch(url, { method, body: fd, credentials: "include" });
-      const data = await res.json() as { error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Save failed");
+      await apiFetch(url, { method, body: fd });
 
       setSaved(true);
       setTimeout(() => setLocation("/admin/products"), 1000);

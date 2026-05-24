@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { apiUrl } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProducts, type ApiProduct } from "@/hooks/use-products";
 import { Plus, Pencil, Trash2, Package, Search, AlertTriangle, Eye, EyeOff } from "lucide-react";
@@ -21,11 +21,7 @@ export default function AdminProducts() {
     setDeletingId(product.id);
     setDeleteError("");
     try {
-      const res = await fetch(apiUrl(`/api/products/${product.id}`), { method: "DELETE", credentials: "include" });
-      if (!res.ok) {
-        const data = await res.json() as { error: string };
-        throw new Error(data.error);
-      }
+      await apiFetch(`/api/products/${product.id}`, { method: "DELETE" });
       await refetch();
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : "Delete failed");
@@ -38,8 +34,7 @@ export default function AdminProducts() {
     try {
       const formData = new FormData();
       formData.append("inStock", product.inStock ? "false" : "true");
-      const res = await fetch(apiUrl(`/api/products/${product.id}`), { method: "PUT", body: formData, credentials: "include" });
-      if (!res.ok) throw new Error("Failed to update");
+      await apiFetch(`/api/products/${product.id}`, { method: "PUT", body: formData });
       await refetch();
     } catch {
       setDeleteError("Failed to update stock status");

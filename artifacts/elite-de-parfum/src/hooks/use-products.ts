@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { apiUrl } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 export interface ApiProduct {
   id: string;
@@ -29,8 +29,7 @@ export function useProducts() {
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(apiUrl("/api/products"), { credentials: "include" });
-      const data = await res.json() as { products: ApiProduct[] };
+      const data = await apiFetch("/api/products") as { products: ApiProduct[] };
       setProducts(data.products ?? []);
       setError(null);
     } catch {

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { apiUrl } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 export interface AuthUser {
   id: string;
@@ -18,25 +18,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const token = localStorage.getItem("auth_token");
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...options?.headers,
-  };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const res = await fetch(apiUrl(`/api${path}`), {
-    ...options,
-    headers,
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? "Request failed");
-  return data;
-}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
