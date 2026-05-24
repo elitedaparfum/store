@@ -55,7 +55,15 @@ app.use(
     origin: (origin, cb) => {
       // Allow requests with no origin (server-to-server, curl, etc.)
       if (!origin) { cb(null, true); return; }
-      if (allowedOrigins.size === 0 || allowedOrigins.has(origin) || origin.endsWith(".vercel.app")) {
+      const originDomain = origin.replace(/^https?:\/\//, "");
+      
+      if (
+        allowedOrigins.size === 0 || 
+        allowedOrigins.has(origin) || 
+        origin.endsWith(".vercel.app") ||
+        originDomain === "elitedaparfum.com" ||
+        originDomain === "www.elitedaparfum.com"
+      ) {
         cb(null, true);
       } else {
         cb(null, false);
