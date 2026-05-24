@@ -226,7 +226,16 @@ export default function Home() {
                         </div>
                         <div className="flex flex-col items-end shrink-0 mt-0.5">
                           <span className="text-[8px] sm:text-[9px] uppercase text-muted-foreground font-mono">From</span>
-                          <span className="text-primary font-mono text-xs sm:text-sm leading-tight">${product.price}</span>
+                          {(product.discountPercent ?? 0) > 0 ? (
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-primary font-mono text-xs sm:text-sm leading-tight">
+                                ${Math.round(product.price * (1 - (product.discountPercent ?? 0) / 100))}
+                              </span>
+                              <span className="text-muted-foreground line-through font-mono text-[10px] leading-tight">${product.price}</span>
+                            </div>
+                          ) : (
+                            <span className="text-primary font-mono text-xs sm:text-sm leading-tight">${product.price}</span>
+                          )}
                         </div>
                       </div>
                     </div>
