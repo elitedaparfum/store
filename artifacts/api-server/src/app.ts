@@ -55,7 +55,7 @@ app.use(
     origin: (origin, cb) => {
       // Allow requests with no origin (server-to-server, curl, etc.)
       if (!origin) { cb(null, true); return; }
-      if (allowedOrigins.size === 0 || allowedOrigins.has(origin)) {
+      if (allowedOrigins.size === 0 || allowedOrigins.has(origin) || origin.endsWith(".vercel.app")) {
         cb(null, true);
       } else {
         cb(null, false);
