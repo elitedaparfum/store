@@ -20,13 +20,18 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 async function apiFetch(path: string, options?: RequestInit) {
+  const token = localStorage.getItem("auth_token");
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...options?.headers,
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const res = await fetch(apiUrl(`/api${path}`), {
     ...options,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
+    headers,
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? "Request failed");
@@ -38,9 +43,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     apiFetch("/auth/me")
       .then(data => setUser(data.user))
-      .catch(() => setUser(null))
+      .catch(() => {
+        localStorage.removeItem("auth_token");
+        setUser(null);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -49,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
+    if (data.token) localStorage.setItem("auth_token", data.token);
     setUser(data.user);
   }, []);
 
@@ -57,11 +72,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
+    if (data.token) localStorage.setItem("auth_token", data.token);
     setUser(data.user);
   }, []);
 
   const logout = useCallback(async () => {
-    await apiFetch("/auth/logout", { method: "POST" });
+    try {
+      await apiFetch("/auth/logout", { method: "POST" });
+    } catch (e) {
+      // Ignore logout errors if token was already invalid
+    }
+    localStorage.removeItem("auth_token");
     setUser(null);
   }, []);
 

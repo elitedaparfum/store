@@ -4,6 +4,11 @@ import crypto from "crypto";
 import { z } from "zod";
 import { db, usersTable, eq, count } from "@workspace/db";
 import { requireAuth, requireAdmin } from "../middlewares/auth.js";
+import jwt from "jsonwebtoken";
+
+const signToken = (userId: string) => {
+  return jwt.sign({ userId }, process.env.SESSION_SECRET || "default_secret", { expiresIn: "7d" });
+};
 
 // ── Lazy Google OAuth Client ──
 // Loaded lazily to prevent crashing the entire auth module if the library has issues
@@ -143,20 +148,8 @@ router.post("/auth/register", async (req, res) => {
         createdAt: usersTable.createdAt,
       });
 
-    req.session.user = user;
-    req.session.save(async (err) => {
-      if (err) {
-        req.log.error({ err }, "Session save error during registration");
-        try {
-          await db.delete(usersTable).where(eq(usersTable.id, user!.id));
-        } catch (delErr) {
-          req.log.error({ delErr }, "Failed to rollback user insert");
-        }
-        res.status(500).json({ error: "Registration failed. Please try again." });
-        return;
-      }
-      res.status(201).json({ user });
-    });
+    const token = signToken(user.id);
+    res.status(201).json({ user, token });
   } catch (err) {
     req.log.error({ err }, "Registration error");
     res.status(500).json({ error: "Registration failed. Please try again." });
@@ -205,15 +198,8 @@ router.post("/auth/login", async (req, res) => {
       createdAt: user.createdAt,
     };
 
-    req.session.user = safeUser;
-    req.session.save((err) => {
-      if (err) {
-        req.log.error({ err }, "Session save error");
-        res.status(500).json({ error: "Login failed" });
-        return;
-      }
-      res.json({ user: safeUser });
-    });
+    const token = signToken(safeUser.id);
+    res.json({ user: safeUser, token });
   } catch (err) {
     req.log.error({ err }, "Login error");
     res.status(500).json({ error: "Login failed. Please try again." });
@@ -293,15 +279,8 @@ router.post("/auth/google", async (req, res) => {
       createdAt: user.createdAt,
     };
 
-    req.session.user = safeUser;
-    req.session.save((err) => {
-      if (err) {
-        req.log.error({ err }, "Session save error");
-        res.status(500).json({ error: "Login failed" });
-        return;
-      }
-      res.json({ user: safeUser });
-    });
+    const token = signToken(safeUser.id);
+    res.json({ user: safeUser, token });
 
   } catch (err) {
     req.log.error({ err }, "Google Login error");
@@ -401,24 +380,12 @@ router.post("/auth/reset-password", async (req, res) => {
 
 // ── Logout ──
 router.post("/auth/logout", requireAuth, (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      req.log.error({ err }, "Logout error");
-      res.status(500).json({ error: "Logout failed" });
-      return;
-    }
-    res.clearCookie("connect.sid");
-    res.json({ success: true });
-  });
+  res.json({ success: true });
 });
 
 // ── Current User ──
-router.get("/auth/me", (req, res) => {
-  if (!req.session.user) {
-    res.status(401).json({ error: "Not authenticated" });
-    return;
-  }
-  res.json({ user: req.session.user });
+router.get("/auth/me", requireAuth, (req, res) => {
+  res.json({ user: req.user });
 });
 
 // ── Admin: Force Reset User Password ──
