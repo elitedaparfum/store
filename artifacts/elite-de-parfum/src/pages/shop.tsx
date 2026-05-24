@@ -33,7 +33,13 @@ export default function Shop() {
   const handleQuickAdd = (e: React.MouseEvent, product: ReturnType<typeof useProducts>["products"][0]) => {
     e.preventDefault();
     e.stopPropagation();
-    addItem({ productId: product.id, name: product.name, size: "50ml", price: product.price, image: product.imageUrl });
+    let variants = [];
+    try { variants = JSON.parse(product.sizes ?? "[]"); } catch { /* ignore */ }
+    const defaultV = variants.find((v: any) => v.inStock) || variants[0] || { name: "Default", price: product.price, inStock: true };
+    
+    if (!defaultV.inStock) return;
+
+    addItem({ productId: product.id, name: product.name, size: defaultV.name, price: defaultV.price, image: product.imageUrl });
     setRecentlyAdded(product.id);
     setTimeout(() => setRecentlyAdded(null), 2000);
   };
@@ -280,7 +286,13 @@ export default function Shop() {
                               className={`w-full py-3 flex items-center justify-center gap-2 uppercase tracking-widest text-[9px] sm:text-[10px] font-semibold transition-all duration-300 font-mono ${justAdded ? "bg-primary text-primary-foreground" : "bg-background/95 backdrop-blur-sm text-foreground hover:bg-primary hover:text-primary-foreground"}`}
                               data-testid={`btn-quick-add-${product.id}`}>
                               {justAdded ? <Check size={11} /> : <ShoppingBag size={11} />}
-                              {justAdded ? "Added" : "Add — 50ml"}
+                              {justAdded ? "Added" : (() => {
+                                let variants: any[] = [];
+                                try { variants = JSON.parse(product.sizes ?? "[]"); } catch { /* ignore */ }
+                                const defaultV = variants.find(v => v.inStock) || variants[0];
+                                if (!defaultV || !defaultV.inStock) return "Out of Stock";
+                                return `Add — ${defaultV.name}`;
+                              })()}
                             </button>
                           </div>
                         </div>
@@ -290,15 +302,16 @@ export default function Shop() {
                             <span className="text-muted-foreground text-[9px] sm:text-[10px] uppercase tracking-widest font-mono">{product.gender}</span>
                           </div>
                           <div className="flex flex-col items-end shrink-0 mt-0.5">
+                            <span className="text-[8px] sm:text-[9px] uppercase text-muted-foreground font-mono">From</span>
                             {(product.discountPercent ?? 0) > 0 ? (
-                              <>
+                              <div className="flex items-baseline gap-1.5">
                                 <span className="text-primary font-mono text-xs sm:text-sm leading-tight">
                                   ${Math.round(product.price * (1 - (product.discountPercent ?? 0) / 100))}
                                 </span>
                                 <span className="text-muted-foreground line-through font-mono text-[10px] leading-tight">${product.price}</span>
-                              </>
+                              </div>
                             ) : (
-                              <span className="text-primary font-mono text-xs sm:text-sm">${product.price}</span>
+                              <span className="text-primary font-mono text-xs sm:text-sm leading-tight">${product.price}</span>
                             )}
                           </div>
                         </div>

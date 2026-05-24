@@ -219,12 +219,15 @@ export default function Home() {
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-base sm:text-lg font-serif text-foreground group-hover:text-primary transition-colors mb-0.5">{product.name}</h3>
+                      <div className="flex items-start justify-between gap-1 px-0.5">
+                        <div className="min-w-0">
+                          <h3 className="text-base sm:text-lg font-serif text-foreground group-hover:text-primary transition-colors mb-0.5 leading-snug line-clamp-2">{product.name}</h3>
                           <p className="text-xs uppercase tracking-widest text-muted-foreground font-mono">{product.gender}</p>
                         </div>
-                        <p className="text-primary font-mono text-sm mt-1">${product.price}</p>
+                        <div className="flex flex-col items-end shrink-0 mt-0.5">
+                          <span className="text-[8px] sm:text-[9px] uppercase text-muted-foreground font-mono">From</span>
+                          <span className="text-primary font-mono text-xs sm:text-sm leading-tight">${product.price}</span>
+                        </div>
                       </div>
                     </div>
                   </Link>

@@ -8,14 +8,19 @@ const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
   family: z.string().min(1, "Family is required"),
   gender: z.string().min(1, "Gender is required"),
-  price: z.string().regex(/^\d+$/, "Price must be a positive integer"),
   notesTop: z.string().optional(),
   notesHeart: z.string().optional(),
   notesBase: z.string().optional(),
   description: z.string().optional(),
   featured: z.enum(["true", "false"]).optional(),
-  inStock: z.enum(["true", "false"]).optional(),
-  sizes: z.string().optional(),
+  sizes: z.string().refine((val) => {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) && parsed.length > 0 && parsed.every(p => p.name && typeof p.price === 'number');
+    } catch {
+      return false;
+    }
+  }, "Variants must be a valid JSON array"),
   discountPercent: z.string().regex(/^\d*$/, "Discount must be a valid number").optional(),
   existingImages: z.string().optional(),
 });
@@ -72,7 +77,12 @@ router.post("/products", requireAdmin, upload.array("newImages", 10), async (req
       res.status(400).json({ error: parseResult.error.errors[0]?.message ?? "Invalid input data" });
       return;
     }
-    const { name, family, gender, price, notesTop, notesHeart, notesBase, description, featured, inStock, sizes, discountPercent, existingImages } = parseResult.data;
+    const { name, family, gender, notesTop, notesHeart, notesBase, description, featured, sizes, discountPercent, existingImages } = parseResult.data;
+
+    // Parse sizes to compute price and inStock
+    const parsedSizes = JSON.parse(sizes as string) as { name: string, price: number, inStock: boolean }[];
+    const computedPrice = parsedSizes.reduce((min, s) => Math.min(min, s.price), Infinity);
+    const computedInStock = parsedSizes.some(s => s.inStock);
 
     // Build images array: existing URLs first, then newly uploaded files
     const existing = parseImages(existingImages, "");
@@ -86,7 +96,7 @@ router.post("/products", requireAdmin, upload.array("newImages", 10), async (req
       name,
       family,
       gender,
-      price: parseInt(price, 10),
+      price: computedPrice,
       imageUrl: finalImageUrl,
       images: JSON.stringify(allImages),
       notesTop: notesTop ?? "",
@@ -94,8 +104,8 @@ router.post("/products", requireAdmin, upload.array("newImages", 10), async (req
       notesBase: notesBase ?? "",
       description: description ?? "",
       featured: featured === "true",
-      inStock: inStock !== "false",
-      sizes: sizes ?? "30ml,50ml,100ml",
+      inStock: computedInStock,
+      sizes: sizes as string,
       discountPercent: discountPercent ? parseInt(discountPercent, 10) : 0,
     }).returning();
 
@@ -114,21 +124,26 @@ router.put("/products/:id", requireAdmin, upload.array("newImages", 10), async (
       res.status(400).json({ error: parseResult.error.errors[0]?.message ?? "Invalid input data" });
       return;
     }
-    const { name, family, gender, price, notesTop, notesHeart, notesBase, description, featured, inStock, sizes, discountPercent, existingImages } = parseResult.data;
+    const { name, family, gender, notesTop, notesHeart, notesBase, description, featured, sizes, discountPercent, existingImages } = parseResult.data;
 
     const updates: Record<string, unknown> = { updatedAt: new Date() };
 
     if (name !== undefined) updates.name = name;
     if (family !== undefined) updates.family = family;
     if (gender !== undefined) updates.gender = gender;
-    if (price !== undefined) updates.price = parseInt(price, 10);
     if (notesTop !== undefined) updates.notesTop = notesTop;
     if (notesHeart !== undefined) updates.notesHeart = notesHeart;
     if (notesBase !== undefined) updates.notesBase = notesBase;
     if (description !== undefined) updates.description = description;
     if (featured !== undefined) updates.featured = featured === "true";
-    if (inStock !== undefined) updates.inStock = inStock !== "false";
-    if (sizes !== undefined) updates.sizes = sizes;
+    if (sizes !== undefined) {
+      updates.sizes = sizes;
+      try {
+        const parsedSizes = JSON.parse(sizes) as { name: string, price: number, inStock: boolean }[];
+        updates.price = parsedSizes.reduce((min, s) => Math.min(min, s.price), Infinity);
+        updates.inStock = parsedSizes.some(s => s.inStock);
+      } catch { /* ignore */ }
+    }
     if (discountPercent !== undefined && discountPercent !== "") updates.discountPercent = parseInt(discountPercent, 10);
 
     // Rebuild images if the client sent existingImages (even if empty array)

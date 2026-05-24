@@ -16,7 +16,7 @@ export const productsTable = pgTable("products", {
   featured: boolean("featured").notNull().default(false),
   inStock: boolean("in_stock").notNull().default(true),
   images: text("images").notNull().default("[]"),
-  sizes: text("sizes").notNull().default("30ml,50ml,100ml"),
+  sizes: text("sizes").notNull().default("[]"),
   discountPercent: integer("discount_percent").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
