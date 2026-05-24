@@ -4,11 +4,33 @@ import crypto from "crypto";
 import { z } from "zod";
 import { db, usersTable, eq, count } from "@workspace/db";
 import { requireAuth, requireAdmin } from "../middlewares/auth.js";
-import { OAuth2Client } from "google-auth-library";
-import { sendPasswordResetEmail } from "../lib/email.js";
 
-// ── Google OAuth Client ──
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || "dummy_client_id");
+// ── Lazy Google OAuth Client ──
+// Loaded lazily to prevent crashing the entire auth module if the library has issues
+let _googleClient: any = null;
+async function getGoogleClient() {
+  if (!_googleClient) {
+    try {
+      const { OAuth2Client } = await import("google-auth-library");
+      _googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || "dummy_client_id");
+    } catch (err) {
+      console.error("Failed to load google-auth-library:", err);
+      throw new Error("Google authentication is not available");
+    }
+  }
+  return _googleClient;
+}
+
+// ── Lazy Email Service ──
+async function sendResetEmail(email: string, token: string, baseUrl: string) {
+  try {
+    const { sendPasswordResetEmail } = await import("../lib/email.js");
+    await sendPasswordResetEmail(email, token, baseUrl);
+  } catch (err) {
+    console.error("Failed to send reset email:", err);
+    throw err;
+  }
+}
 
 // ── Validation Schemas ──
 
@@ -214,6 +236,7 @@ router.post("/auth/google", async (req, res) => {
       req.log.warn("GOOGLE_CLIENT_ID is not configured.");
     }
 
+    const googleClient = await getGoogleClient();
     const ticket = await googleClient.verifyIdToken({
       idToken: parseResult.data.credential,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -327,7 +350,7 @@ router.post("/auth/forgot-password", async (req, res) => {
     // Send email
     // Determine frontend base URL
     const origin = req.headers.origin || "https://elitedaparfum.com";
-    await sendPasswordResetEmail(user.email, resetToken, origin);
+    await sendResetEmail(user.email, resetToken, origin);
 
     res.json({ success: true, message: "If an account exists, a reset link was sent." });
   } catch (err) {
