@@ -63,9 +63,7 @@ async function buildAll() {
       "@aws-sdk/*",
       "@azure/*",
       "@opentelemetry/*",
-      "@google-cloud/*",
-      "@google/*",
-      "googleapis",
+      // NOTE: @google-cloud/*, @google/*, googleapis removed to allow google-auth-library bundling
       "firebase-admin",
       "@parcel/watcher",
       "@sentry/profiling-node",
