@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    apiFetch("/auth/me")
+    apiFetch("/api/auth/me")
       .then(data => setUser(data.user))
       .catch(() => {
         localStorage.removeItem("auth_token");
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const data = await apiFetch("/auth/login", {
+    const data = await apiFetch("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const register = useCallback(async (email: string, password: string) => {
-    const data = await apiFetch("/auth/register", {
+    const data = await apiFetch("/api/auth/register", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await apiFetch("/auth/logout", { method: "POST" });
+      await apiFetch("/api/auth/logout", { method: "POST" });
     } catch (e) {
       // Ignore logout errors if token was already invalid
     }
