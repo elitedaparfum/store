@@ -1,11 +1,12 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "pnpm install --frozen-lockfile && pnpm run typecheck:libs && pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/db run push && pnpm --filter @workspace/scripts run seed:products"
+buildCommand = "pnpm install --frozen-lockfile && pnpm run typecheck:libs && pnpm --filter @workspace/api-server run build"
 
 [deploy]
-startCommand = "node artifacts/api-server/dist/index.mjs"
+startCommand = "pnpm --filter @workspace/db run push || true; pnpm --filter @workspace/scripts run seed:products || true; node artifacts/api-server/dist/index.mjs"
 healthcheckPath = "/api/healthz"
-healthcheckTimeout = 30
+healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
+
 
