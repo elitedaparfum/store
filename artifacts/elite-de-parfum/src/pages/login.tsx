@@ -5,9 +5,12 @@ import { useAuth } from "@/context/auth";
 import { BrandLogo } from "@/components/brand-logo";
 import { useTheme } from "@/components/theme-provider";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
+import { useMutation } from "@tanstack/react-query";
+import { apiUrl } from "@/lib/api";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, setUser } = useAuth();
   const { theme } = useTheme();
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
@@ -15,6 +18,29 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const googleLoginMutation = useMutation({
+    mutationFn: async (credential: string) => {
+      const res = await fetch(apiUrl("/api/auth/google"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ credential }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Google login failed");
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.user) {
+        setUser(data.user);
+        setLocation("/");
+      }
+    },
+    onError: (err: Error) => {
+      setError(err.message);
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +57,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -51,8 +77,34 @@ export default function Login() {
           <p className="text-muted-foreground text-sm font-mono uppercase tracking-widest text-[10px]">Sign in to your account</p>
         </div>
 
-        <div className="bg-card border border-border p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-card border border-border p-8 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
+          {/* Google Sign In */}
+          <div className="mb-6 flex justify-center">
+            <GoogleLogin
+              onSuccess={(credentialResponse) => {
+                if (credentialResponse.credential) {
+                  googleLoginMutation.mutate(credentialResponse.credential);
+                }
+              }}
+              onError={() => setError("Google Sign In failed")}
+              theme={theme === "dark" ? "filled_black" : "outline"}
+              text="signin_with"
+              shape="rectangular"
+            />
+          </div>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground font-mono tracking-widest text-[10px]">Or continue with</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6 relative">
             <div className="space-y-2">
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Email</label>
               <div className="relative">
@@ -70,7 +122,14 @@ export default function Login() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Password</label>
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Password</label>
+                <Link href="/forgot-password">
+                  <span className="text-[10px] uppercase tracking-widest text-primary hover:underline cursor-pointer font-mono">
+                    Forgot password?
+                  </span>
+                </Link>
+              </div>
               <div className="relative">
                 <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -105,23 +164,16 @@ export default function Login() {
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full bg-primary text-primary-foreground py-4 uppercase tracking-[0.2em] text-[11px] font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-mono"
+              disabled={loading || googleLoginMutation.isPending}
+              className="w-full bg-primary text-primary-foreground py-4 uppercase tracking-[0.2em] text-[11px] font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-mono relative overflow-hidden group"
               data-testid="btn-login-submit"
             >
-              {loading ? "Signing in…" : "Sign In"}
+              <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+              {loading || googleLoginMutation.isPending ? "Signing in…" : "Sign In"}
             </button>
           </form>
 
-          <div className="mt-8 text-center border-t border-border pt-6 space-y-3">
-            <a
-              href="https://wa.me/17866824792?text=Hi%2C%20I%20forgot%20my%20password%20for%20my%20Elite%20Da%20Parfum%20account.%20Can%20you%20help%20me%20reset%20it%3F"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block text-muted-foreground text-xs hover:text-primary transition-colors font-mono uppercase tracking-widest"
-            >
-              Forgot password? Contact us
-            </a>
+          <div className="mt-8 text-center pt-6 space-y-3">
             <p className="text-muted-foreground text-sm">
               Don&apos;t have an account?{" "}
               <Link href="/register">

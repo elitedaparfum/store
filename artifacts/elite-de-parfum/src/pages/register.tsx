@@ -5,9 +5,12 @@ import { useAuth } from "@/context/auth";
 import { BrandLogo } from "@/components/brand-logo";
 import { useTheme } from "@/components/theme-provider";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
+import { useMutation } from "@tanstack/react-query";
+import { apiUrl } from "@/lib/api";
 
 export default function Register() {
-  const { register } = useAuth();
+  const { register, setUser } = useAuth();
   const { theme } = useTheme();
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
@@ -16,6 +19,29 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const googleLoginMutation = useMutation({
+    mutationFn: async (credential: string) => {
+      const res = await fetch(apiUrl("/api/auth/google"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ credential }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Google sign up failed");
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.user) {
+        setUser(data.user);
+        setLocation("/");
+      }
+    },
+    onError: (err: Error) => {
+      setError(err.message);
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +66,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -60,8 +86,34 @@ export default function Register() {
           <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">Join the Elite Da Parfum family</p>
         </div>
 
-        <div className="bg-card border border-border p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-card border border-border p-8 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
+          {/* Google Sign Up */}
+          <div className="mb-6 flex justify-center">
+            <GoogleLogin
+              onSuccess={(credentialResponse) => {
+                if (credentialResponse.credential) {
+                  googleLoginMutation.mutate(credentialResponse.credential);
+                }
+              }}
+              onError={() => setError("Google Sign Up failed")}
+              theme={theme === "dark" ? "filled_black" : "outline"}
+              text="signup_with"
+              shape="rectangular"
+            />
+          </div>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground font-mono tracking-widest text-[10px]">Or continue with</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6 relative">
             <div className="space-y-2">
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Email</label>
               <div className="relative">
@@ -130,11 +182,11 @@ export default function Register() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || googleLoginMutation.isPending}
               className="w-full bg-primary text-primary-foreground py-4 uppercase tracking-[0.2em] text-[11px] font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-mono"
               data-testid="btn-register-submit"
             >
-              {loading ? "Creating account…" : "Create Account"}
+              {loading || googleLoginMutation.isPending ? "Creating account…" : "Create Account"}
             </button>
           </form>
 

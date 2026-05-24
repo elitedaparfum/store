@@ -1,8 +1,14 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { z } from "zod";
 import { db, usersTable, eq, count } from "@workspace/db";
 import { requireAuth, requireAdmin } from "../middlewares/auth.js";
+import { OAuth2Client } from "google-auth-library";
+import { sendPasswordResetEmail } from "../lib/email.js";
+
+// ── Google OAuth Client ──
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || "dummy_client_id");
 
 // ── Validation Schemas ──
 
@@ -16,32 +22,38 @@ const loginSchema = z.object({
   password: z.string(),
 });
 
-const resetPasswordSchema = z.object({
+const googleLoginSchema = z.object({
+  credential: z.string().min(1, "Google credential is required"),
+});
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email format"),
+});
+
+const resetPasswordPublicSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+  newPassword: z.string().min(6, "Password must be at least 6 characters").max(100),
+});
+
+const adminResetPasswordSchema = z.object({
   userId: z.string().uuid("Invalid user ID"),
   newPassword: z.string().min(6, "Password must be at least 6 characters").max(100),
 });
 
 // ── Rate Limiting ──
-// Simple in-memory rate limiter for auth endpoints.
-// Tracks attempts per IP. Resets every window.
-
-const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-const RATE_LIMIT_MAX = 20; // max attempts per window
-
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const RATE_LIMIT_MAX = 20;
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 function checkRateLimit(req: Request, res: Response): boolean {
   const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
   const now = Date.now();
-
   let entry = rateLimitMap.get(ip);
   if (!entry || now > entry.resetAt) {
     entry = { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
     rateLimitMap.set(ip, entry);
   }
-
   entry.count++;
-
   if (entry.count > RATE_LIMIT_MAX) {
     res.status(429).json({ error: "Too many attempts. Please try again later." });
     return false;
@@ -49,7 +61,6 @@ function checkRateLimit(req: Request, res: Response): boolean {
   return true;
 }
 
-// Clean up stale rate limit entries every 30 minutes
 setInterval(() => {
   const now = Date.now();
   for (const [key, val] of rateLimitMap) {
@@ -74,19 +85,21 @@ router.post("/auth/register", async (req, res) => {
     const { email, password } = parseResult.data;
     const emailLower = email.toLowerCase().trim();
 
-    // Check if user already exists
     const existing = await db
-      .select({ id: usersTable.id })
+      .select({ id: usersTable.id, googleId: usersTable.googleId })
       .from(usersTable)
       .where(eq(usersTable.email, emailLower))
       .limit(1);
 
     if (existing.length > 0) {
+      if (existing[0].googleId) {
+         res.status(409).json({ error: "Account exists with Google Sign-In. Please use 'Sign in with Google'." });
+         return;
+      }
       res.status(409).json({ error: "An account with this email already exists" });
       return;
     }
 
-    // Determine if this is the first user (auto-admin) or in admin list
     const [countResult] = await db.select({ count: count() }).from(usersTable);
     const isFirstUser = (countResult?.count ?? 0) === 0;
 
@@ -98,7 +111,6 @@ router.post("/auth/register", async (req, res) => {
     const isAdmin = isFirstUser || adminEmails.includes(emailLower);
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Insert user
     const [user] = await db
       .insert(usersTable)
       .values({ email: emailLower, passwordHash, isAdmin })
@@ -109,7 +121,6 @@ router.post("/auth/register", async (req, res) => {
         createdAt: usersTable.createdAt,
       });
 
-    // Save session — if this fails, roll back the user insert
     req.session.user = user;
     req.session.save(async (err) => {
       if (err) {
@@ -154,6 +165,11 @@ router.post("/auth/login", async (req, res) => {
       return;
     }
 
+    if (!user.passwordHash) {
+      res.status(401).json({ error: "Please use 'Sign in with Google' to log in to this account." });
+      return;
+    }
+
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       res.status(401).json({ error: "Invalid email or password" });
@@ -182,6 +198,184 @@ router.post("/auth/login", async (req, res) => {
   }
 });
 
+// ── Google OAuth Login ──
+router.post("/auth/google", async (req, res) => {
+  if (!checkRateLimit(req, res)) return;
+
+  try {
+    const parseResult = googleLoginSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({ error: "Missing Google credential" });
+      return;
+    }
+    
+    // In dev without a client ID, we might need a mock for testing, but let's assume we have it.
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      req.log.warn("GOOGLE_CLIENT_ID is not configured.");
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: parseResult.data.credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      res.status(400).json({ error: "Invalid Google token" });
+      return;
+    }
+
+    const emailLower = payload.email.toLowerCase().trim();
+    const googleId = payload.sub;
+
+    let [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, emailLower))
+      .limit(1);
+
+    if (user) {
+      // User exists, if they don't have googleId linked, we can link it
+      if (!user.googleId) {
+        const [updatedUser] = await db
+          .update(usersTable)
+          .set({ googleId })
+          .where(eq(usersTable.id, user.id))
+          .returning();
+        user = updatedUser;
+      }
+    } else {
+      // Create new user via Google
+      const [countResult] = await db.select({ count: count() }).from(usersTable);
+      const isFirstUser = (countResult?.count ?? 0) === 0;
+      const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map(e => e.trim().toLowerCase()).filter(Boolean);
+      const isAdmin = isFirstUser || adminEmails.includes(emailLower);
+
+      const [newUser] = await db
+        .insert(usersTable)
+        .values({
+          email: emailLower,
+          googleId,
+          passwordHash: null, // No password for Google users
+          isAdmin,
+        })
+        .returning();
+      user = newUser;
+    }
+
+    const safeUser = {
+      id: user.id,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      createdAt: user.createdAt,
+    };
+
+    req.session.user = safeUser;
+    req.session.save((err) => {
+      if (err) {
+        req.log.error({ err }, "Session save error");
+        res.status(500).json({ error: "Login failed" });
+        return;
+      }
+      res.json({ user: safeUser });
+    });
+
+  } catch (err) {
+    req.log.error({ err }, "Google Login error");
+    res.status(500).json({ error: "Google authentication failed" });
+  }
+});
+
+// ── Forgot Password ──
+router.post("/auth/forgot-password", async (req, res) => {
+  if (!checkRateLimit(req, res)) return;
+
+  try {
+    const parseResult = forgotPasswordSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({ error: "Invalid email" });
+      return;
+    }
+    const emailLower = parseResult.data.email.toLowerCase().trim();
+
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, emailLower))
+      .limit(1);
+
+    // To prevent email enumeration, always return success even if user not found
+    if (!user) {
+      res.json({ success: true, message: "If an account exists, a reset link was sent." });
+      return;
+    }
+
+    if (user.googleId && !user.passwordHash) {
+      // Tell them to use Google login (could send an email or just return generic success)
+      res.json({ success: true, message: "If an account exists, a reset link was sent." });
+      return;
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await db
+      .update(usersTable)
+      .set({ resetToken, resetTokenExpires: expires })
+      .where(eq(usersTable.id, user.id));
+
+    // Send email
+    // Determine frontend base URL
+    const origin = req.headers.origin || "https://elitedaparfum.com";
+    await sendPasswordResetEmail(user.email, resetToken, origin);
+
+    res.json({ success: true, message: "If an account exists, a reset link was sent." });
+  } catch (err) {
+    req.log.error({ err }, "Forgot password error");
+    res.status(500).json({ error: "Failed to process request" });
+  }
+});
+
+// ── Reset Password (Public) ──
+router.post("/auth/reset-password", async (req, res) => {
+  if (!checkRateLimit(req, res)) return;
+
+  try {
+    const parseResult = resetPasswordPublicSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({ error: parseResult.error.errors[0]?.message ?? "Invalid input" });
+      return;
+    }
+    const { token, newPassword } = parseResult.data;
+
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.resetToken, token))
+      .limit(1);
+
+    if (!user || !user.resetTokenExpires || new Date() > user.resetTokenExpires) {
+      res.status(400).json({ error: "Invalid or expired reset token" });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await db
+      .update(usersTable)
+      .set({ 
+        passwordHash, 
+        resetToken: null, 
+        resetTokenExpires: null 
+      })
+      .where(eq(usersTable.id, user.id));
+
+    res.json({ success: true, message: "Password has been reset successfully." });
+  } catch (err) {
+    req.log.error({ err }, "Reset password error");
+    res.status(500).json({ error: "Failed to reset password" });
+  }
+});
+
 // ── Logout ──
 router.post("/auth/logout", requireAuth, (req, res) => {
   req.session.destroy((err) => {
@@ -204,10 +398,10 @@ router.get("/auth/me", (req, res) => {
   res.json({ user: req.session.user });
 });
 
-// ── Admin: Reset User Password ──
-router.post("/auth/reset-password", requireAdmin, async (req, res) => {
+// ── Admin: Force Reset User Password ──
+router.post("/auth/admin/reset-password", requireAdmin, async (req, res) => {
   try {
-    const parseResult = resetPasswordSchema.safeParse(req.body);
+    const parseResult = adminResetPasswordSchema.safeParse(req.body);
     if (!parseResult.success) {
       res.status(400).json({ error: parseResult.error.errors[0]?.message ?? "Invalid input" });
       return;
@@ -228,7 +422,7 @@ router.post("/auth/reset-password", requireAdmin, async (req, res) => {
 
     res.json({ success: true, email: updated.email });
   } catch (err) {
-    req.log.error({ err }, "Password reset error");
+    req.log.error({ err }, "Admin password reset error");
     res.status(500).json({ error: "Password reset failed" });
   }
 });

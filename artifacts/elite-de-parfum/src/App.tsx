@@ -9,6 +9,7 @@ import { CartProvider } from "@/context/cart";
 import { CartDrawer } from "@/components/cart-drawer";
 import { AuthProvider, useAuth } from "@/context/auth";
 import { Loader2 } from "lucide-react";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import Home from "@/pages/home";
 import Shop from "@/pages/shop";
@@ -16,6 +17,8 @@ import ProductDetail from "@/pages/product";
 import Contact from "@/pages/contact";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
 import AdminDashboard from "@/pages/admin/index";
 import AdminProducts from "@/pages/admin/products";
 import ProductForm from "@/pages/admin/product-form";
@@ -79,6 +82,12 @@ function AppRoutes() {
       <Route path="/register">
         <AuthGuard><Register /></AuthGuard>
       </Route>
+      <Route path="/forgot-password">
+        <AuthGuard><ForgotPassword /></AuthGuard>
+      </Route>
+      <Route path="/reset-password">
+        <AuthGuard><ResetPassword /></AuthGuard>
+      </Route>
       <Route path="/admin/products/new">
         <AdminRoutes />
       </Route>
@@ -99,22 +108,26 @@ function AppRoutes() {
 }
 
 function App() {
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "dummy-client-id";
+
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="elite-theme">
-      <AuthProvider>
-        <CartProvider>
-          <QueryClientProvider client={queryClient}>
-            <TooltipProvider>
-              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-                <AppRoutes />
-                <CartDrawer />
-              </WouterRouter>
-              <Toaster />
-            </TooltipProvider>
-          </QueryClientProvider>
-        </CartProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <GoogleOAuthProvider clientId={clientId}>
+      <ThemeProvider defaultTheme="dark" storageKey="elite-theme">
+        <AuthProvider>
+          <CartProvider>
+            <QueryClientProvider client={queryClient}>
+              <TooltipProvider>
+                <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                  <AppRoutes />
+                  <CartDrawer />
+                </WouterRouter>
+                <Toaster />
+              </TooltipProvider>
+            </QueryClientProvider>
+          </CartProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </GoogleOAuthProvider>
   );
 }
 
