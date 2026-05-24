@@ -1,0 +1,67 @@
+uploads = []
+
+[[generated]]
+id = "OjMio1Am7ZsQkjtqyf0bw"
+uri = "file://artifacts/elite-de-parfum/public/images/oud-royale.png"
+type = "image"
+title = "Oud Royale perfume bottle"
+
+[[generated]]
+id = "KuFt6KuwdFvGSESB6goAn"
+uri = "file://artifacts/elite-de-parfum/public/images/rose-de-nuit.png"
+type = "image"
+title = "Rose de Nuit perfume bottle"
+
+[[generated]]
+id = "nzLiaxXdfyboD6l3PyP2c"
+uri = "file://artifacts/elite-de-parfum/public/images/amber-mystique.png"
+type = "image"
+title = "Amber Mystique perfume bottle"
+
+[[generated]]
+id = "MKFyoomnfwFOJK6q5cWHb"
+uri = "file://artifacts/elite-de-parfum/public/images/cedar-noir.png"
+type = "image"
+title = "Cedar Noir perfume bottle"
+
+[[generated]]
+id = "Hjvms2BoiBj5mJX1da6eL"
+uri = "file://artifacts/elite-de-parfum/public/images/saffron-dreams.png"
+type = "image"
+title = "Saffron Dreams perfume bottle"
+
+[[generated]]
+id = "CZf2kLOw5Z0eDD7i099EV"
+uri = "file://artifacts/elite-de-parfum/public/images/white-jasmine.png"
+type = "image"
+title = "White Jasmine perfume bottle"
+
+[[generated]]
+id = "uZ1wmV1P5yPdW3P4TWiku"
+uri = "file://artifacts/elite-de-parfum/public/images/black-iris.png"
+type = "image"
+title = "Black Iris perfume bottle"
+
+[[generated]]
+id = "GsI1IHdADc9WSvrGc-aVE"
+uri = "file://artifacts/elite-de-parfum/public/images/sandalwood-elixir.png"
+type = "image"
+title = "Sandalwood Elixir perfume bottle"
+
+[[generated]]
+id = "SlZF2pvXkDHRdeUJz0zmH"
+uri = "file://artifacts/elite-de-parfum/public/images/midnight-bergamot.png"
+type = "image"
+title = "Midnight Bergamot perfume bottle"
+
+[[generated]]
+id = "swzuJ1zaiLolASLGZCeTd"
+uri = "file://artifacts/elite-de-parfum/public/images/velvet-oud.png"
+type = "image"
+title = "Velvet Oud perfume bottle"
+
+[[outputs]]
+id = "DFxn6ep244hqEuDnSqTLZ"
+uri = "file://elite-da-parfum-tech-spec.docx"
+type = "word_document"
+title = "Elite Da Parfum — Technical Spec & Deployment Guide"
