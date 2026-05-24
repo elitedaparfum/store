@@ -12,7 +12,7 @@ export interface ApiProduct {
   notesHeart: string;
   notesBase: string;
   description: string;
-  featured: string;
+  featured: boolean;
   inStock: boolean;
   images: string;
   sizes: string;

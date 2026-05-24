@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
 
 export interface CartItem {
   productId: string;
@@ -22,11 +22,40 @@ interface CartContextType {
   closeCart: () => void;
 }
 
+const CART_STORAGE_KEY = "elite-cart";
+
+function loadCart(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Validate each item has the required fields
+    return parsed.filter(
+      (i: unknown) =>
+        typeof i === "object" &&
+        i !== null &&
+        "productId" in i &&
+        "name" in i &&
+        "size" in i &&
+        "price" in i &&
+        "quantity" in i
+    ) as CartItem[];
+  } catch {
+    return [];
+  }
+}
+
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(loadCart);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Persist to localStorage whenever items change
+  useEffect(() => {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  }, [items]);
 
   const addItem = useCallback((newItem: Omit<CartItem, "quantity">) => {
     setItems(prev => {

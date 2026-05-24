@@ -7,7 +7,7 @@ import { sessionMiddleware } from "./lib/session.js";
 
 const app: Express = express();
 
-// Trust reverse proxy (Replit in dev, Railway in prod) so req.secure reflects HTTPS
+// Trust reverse proxy (Railway in prod) so req.secure reflects HTTPS
 app.set("trust proxy", 1);
 
 app.use(
@@ -24,12 +24,22 @@ app.use(
   }),
 );
 
+// ── Security Headers ──
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
+
+// ── CORS ──
 // Build allowed origins list from env vars
-// ALLOWED_ORIGINS — comma-separated list for production, e.g.:
-//   https://elitedaparfum.vercel.app,https://elitedaparfum.com
 const allowedOrigins = new Set<string>();
 
-const allowedOriginsStr = process.env.ALLOWED_ORIGINS || "https://elite-da-parfum.vercel.app";
+const allowedOriginsStr =
+  process.env.ALLOWED_ORIGINS ||
+  "https://elite-da-parfum.vercel.app,https://elitedaparfum.com,https://www.elitedaparfum.com";
 
 allowedOriginsStr
   .split(",")

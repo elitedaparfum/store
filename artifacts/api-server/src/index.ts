@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { seedAdminUser } from "./lib/seed.js";
 
 const rawPort = process.env["PORT"];
 
@@ -14,6 +15,11 @@ const port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
+
+// Seed admin user on startup (idempotent — skips if users exist)
+seedAdminUser().catch((err) => {
+  logger.error({ err }, "Failed to seed admin user (non-fatal)");
+});
 
 app.listen(port, (err) => {
   if (err) {

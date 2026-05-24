@@ -113,7 +113,15 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-8 text-center border-t border-border pt-6">
+          <div className="mt-8 text-center border-t border-border pt-6 space-y-3">
+            <a
+              href="https://wa.me/17866824792?text=Hi%2C%20I%20forgot%20my%20password%20for%20my%20Elite%20Da%20Parfum%20account.%20Can%20you%20help%20me%20reset%20it%3F"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-muted-foreground text-xs hover:text-primary transition-colors font-mono uppercase tracking-widest"
+            >
+              Forgot password? Contact us
+            </a>
             <p className="text-muted-foreground text-sm">
               Don&apos;t have an account?{" "}
               <Link href="/register">

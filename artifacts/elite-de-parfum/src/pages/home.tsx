@@ -15,7 +15,7 @@ const stagger = {
 
 export default function Home() {
   const { products } = useProducts();
-  const featured = products.filter(p => p.featured === "true" && p.inStock).slice(0, 3);
+  const featured = products.filter(p => p.featured && p.inStock).slice(0, 3);
   const displayProducts = featured.length >= 3 ? featured : products.filter(p => p.inStock).slice(0, 3);
 
   return (
