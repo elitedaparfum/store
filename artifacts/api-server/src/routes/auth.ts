@@ -385,7 +385,18 @@ router.post("/auth/logout", requireAuth, (req, res) => {
 
 // ── Current User ──
 router.get("/auth/me", requireAuth, (req, res) => {
-  res.json({ user: req.user });
+  const user = req.user;
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const safeUser = {
+    id: user.id,
+    email: user.email,
+    isAdmin: user.isAdmin,
+    createdAt: user.createdAt,
+  };
+  res.json({ user: safeUser });
 });
 
 // ── Admin: Force Reset User Password ──
