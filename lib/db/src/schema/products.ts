@@ -13,7 +13,7 @@ export const productsTable = pgTable("products", {
   notesHeart: text("notes_heart").notNull().default(""),
   notesBase: text("notes_base").notNull().default(""),
   description: text("description").notNull().default(""),
-  featured: text("featured").notNull().default("false"),
+  featured: boolean("featured").notNull().default(false),
   inStock: boolean("in_stock").notNull().default(true),
   images: text("images").notNull().default("[]"),
   sizes: text("sizes").notNull().default("30ml,50ml,100ml"),

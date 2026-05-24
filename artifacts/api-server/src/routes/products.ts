@@ -1,7 +1,24 @@
 import { Router, type IRouter } from "express";
 import multer from "multer";
+import { z } from "zod";
 import { db, productsTable, eq } from "@workspace/db";
 import { requireAdmin } from "../middlewares/auth.js";
+
+const productSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  family: z.string().min(1, "Family is required"),
+  gender: z.string().min(1, "Gender is required"),
+  price: z.string().regex(/^\d+$/, "Price must be a positive integer"),
+  notesTop: z.string().optional(),
+  notesHeart: z.string().optional(),
+  notesBase: z.string().optional(),
+  description: z.string().optional(),
+  featured: z.enum(["true", "false"]).optional(),
+  inStock: z.enum(["true", "false"]).optional(),
+  sizes: z.string().optional(),
+  discountPercent: z.string().regex(/^\d*$/, "Discount must be a valid number").optional(),
+  existingImages: z.string().optional(),
+});
 
 const router: IRouter = Router();
 const upload = multer({
@@ -50,12 +67,12 @@ router.get("/products/:id", async (req, res) => {
 
 router.post("/products", requireAdmin, upload.array("newImages", 10), async (req, res) => {
   try {
-    const { name, family, gender, price, notesTop, notesHeart, notesBase, description, featured, inStock, sizes, discountPercent, existingImages } = req.body as Record<string, string>;
-
-    if (!name || !family || !gender || !price) {
-      res.status(400).json({ error: "Name, family, gender, and price are required" });
+    const parseResult = productSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({ error: parseResult.error.errors[0]?.message ?? "Invalid input data" });
       return;
     }
+    const { name, family, gender, price, notesTop, notesHeart, notesBase, description, featured, inStock, sizes, discountPercent, existingImages } = parseResult.data;
 
     // Build images array: existing URLs first, then newly uploaded files
     const existing = parseImages(existingImages, "");
@@ -76,7 +93,7 @@ router.post("/products", requireAdmin, upload.array("newImages", 10), async (req
       notesHeart: notesHeart ?? "",
       notesBase: notesBase ?? "",
       description: description ?? "",
-      featured: featured ?? "false",
+      featured: featured === "true",
       inStock: inStock !== "false",
       sizes: sizes ?? "30ml,50ml,100ml",
       discountPercent: discountPercent ? parseInt(discountPercent, 10) : 0,
@@ -92,7 +109,12 @@ router.post("/products", requireAdmin, upload.array("newImages", 10), async (req
 router.put("/products/:id", requireAdmin, upload.array("newImages", 10), async (req, res) => {
   try {
     const id = String(req.params.id);
-    const { name, family, gender, price, notesTop, notesHeart, notesBase, description, featured, inStock, sizes, discountPercent, existingImages } = req.body as Record<string, string>;
+    const parseResult = productSchema.partial().safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({ error: parseResult.error.errors[0]?.message ?? "Invalid input data" });
+      return;
+    }
+    const { name, family, gender, price, notesTop, notesHeart, notesBase, description, featured, inStock, sizes, discountPercent, existingImages } = parseResult.data;
 
     const updates: Record<string, unknown> = { updatedAt: new Date() };
 
@@ -104,10 +126,10 @@ router.put("/products/:id", requireAdmin, upload.array("newImages", 10), async (
     if (notesHeart !== undefined) updates.notesHeart = notesHeart;
     if (notesBase !== undefined) updates.notesBase = notesBase;
     if (description !== undefined) updates.description = description;
-    if (featured !== undefined) updates.featured = featured;
+    if (featured !== undefined) updates.featured = featured === "true";
     if (inStock !== undefined) updates.inStock = inStock !== "false";
     if (sizes !== undefined) updates.sizes = sizes;
-    if (discountPercent !== undefined) updates.discountPercent = parseInt(discountPercent, 10);
+    if (discountPercent !== undefined && discountPercent !== "") updates.discountPercent = parseInt(discountPercent, 10);
 
     // Rebuild images if the client sent existingImages (even if empty array)
     if (existingImages !== undefined) {

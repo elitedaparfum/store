@@ -1,22 +1,29 @@
 import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
 import { db, usersTable, eq, count } from "@workspace/db";
 import { requireAuth } from "../middlewares/auth.js";
+
+const registerSchema = z.object({
+  email: z.string().email("Invalid email format").max(255),
+  password: z.string().min(6, "Password must be at least 6 characters").max(100),
+});
+
+const loginSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  password: z.string(),
+});
 
 const router: IRouter = Router();
 
 router.post("/auth/register", async (req, res) => {
   try {
-    const { email, password } = req.body as { email?: string; password?: string };
-
-    if (!email || !password) {
-      res.status(400).json({ error: "Email and password are required" });
+    const parseResult = registerSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({ error: parseResult.error.errors[0]?.message ?? "Invalid input" });
       return;
     }
-    if (password.length < 6) {
-      res.status(400).json({ error: "Password must be at least 6 characters" });
-      return;
-    }
+    const { email, password } = parseResult.data;
 
     const emailLower = email.toLowerCase().trim();
 
@@ -70,12 +77,12 @@ router.post("/auth/register", async (req, res) => {
 
 router.post("/auth/login", async (req, res) => {
   try {
-    const { email, password } = req.body as { email?: string; password?: string };
-
-    if (!email || !password) {
-      res.status(400).json({ error: "Email and password are required" });
+    const parseResult = loginSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({ error: "Invalid email or password format" });
       return;
     }
+    const { email, password } = parseResult.data;
 
     const emailLower = email.toLowerCase().trim();
 

@@ -56,7 +56,7 @@ export default function ProductForm() {
     setFetching(true);
     fetch(apiUrl(`/api/products/${id}`), { credentials: "include" })
       .then(r => r.json())
-      .then((data: { product: { name: string; family: string; gender: string; price: number; notesTop: string; notesHeart: string; notesBase: string; description: string; imageUrl: string; images: string; featured: string; inStock: boolean; sizes: string; discountPercent: number } }) => {
+      .then((data: { product: { name: string; family: string; gender: string; price: number; notesTop: string; notesHeart: string; notesBase: string; description: string; imageUrl: string; images: string; featured: boolean; inStock: boolean; sizes: string; discountPercent: number } }) => {
         const p = data.product;
         setForm({
           name: p.name ?? "",
@@ -67,7 +67,7 @@ export default function ProductForm() {
           notesHeart: p.notesHeart ?? "",
           notesBase: p.notesBase ?? "",
           description: p.description ?? "",
-          featured: p.featured ?? "false",
+          featured: p.featured ? "true" : "false",
           inStock: p.inStock === false ? "false" : "true",
           discountPercent: String(p.discountPercent ?? 0),
         });
