@@ -39,7 +39,10 @@ export default function Shop() {
     
     if (!defaultV.inStock) return;
 
-    addItem({ productId: product.id, name: product.name, size: defaultV.name, price: defaultV.price, image: product.imageUrl });
+    const discount = product.discountPercent ?? 0;
+    const finalPrice = discount > 0 ? Math.round(defaultV.price * (1 - discount / 100)) : defaultV.price;
+
+    addItem({ productId: product.id, name: product.name, size: defaultV.name, price: finalPrice, image: product.imageUrl });
     setRecentlyAdded(product.id);
     setTimeout(() => setRecentlyAdded(null), 2000);
   };

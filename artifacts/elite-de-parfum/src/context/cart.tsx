@@ -46,16 +46,46 @@ function loadCart(): CartItem[] {
   }
 }
 
+import { useProducts } from "@/hooks/use-products";
+
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(loadCart);
   const [isOpen, setIsOpen] = useState(false);
+  const { products } = useProducts();
 
   // Persist to localStorage whenever items change
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   }, [items]);
+
+  // Sync prices with live product data
+  useEffect(() => {
+    if (products.length > 0 && items.length > 0) {
+      setItems(prev => {
+        let changed = false;
+        const newItems = prev.map(item => {
+          const product = products.find(p => p.id === item.productId);
+          if (product) {
+            let variants = [];
+            try { variants = JSON.parse(product.sizes ?? "[]"); } catch { /* ignore */ }
+            const variant = variants.find((v: any) => v.name === item.size);
+            const originalPrice = variant ? variant.price : product.price;
+            const discount = product.discountPercent ?? 0;
+            const currentPrice = discount > 0 ? Math.round(originalPrice * (1 - discount / 100)) : originalPrice;
+            
+            if (item.price !== currentPrice) {
+              changed = true;
+              return { ...item, price: currentPrice };
+            }
+          }
+          return item;
+        });
+        return changed ? newItems : prev;
+      });
+    }
+  }, [products]);
 
   const addItem = useCallback((newItem: Omit<CartItem, "quantity">) => {
     setItems(prev => {
