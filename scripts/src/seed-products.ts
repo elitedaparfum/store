@@ -12,7 +12,7 @@ const SAMPLE_PRODUCTS = [
     notesBase: "Musk, Sandalwood, Vanilla",
     description: "A majestic oud composition born from the rarest Arabian woods. Oud Royale opens with a whisper of precious saffron and sun-drenched bergamot before revealing its heart of legendary oud, Bulgarian rose, and warm amber. The drydown is an eternal embrace of velvety musk and sandalwood.",
     imageUrl: "/images/oud-royale.png",
-    featured: "true",
+    featured: true,
   },
   {
     name: "Rose de Minuit",
@@ -24,7 +24,7 @@ const SAMPLE_PRODUCTS = [
     notesBase: "White Musk, Ambrette, Cedarwood",
     description: "A nocturnal rose that blooms only under starlight. Rose de Minuit captures the ineffable beauty of a dew-kissed garden at midnight, where Bulgarian roses unfurl their petals alongside delicate jasmine and voluptuous peony.",
     imageUrl: "/images/rose-de-nuit.png",
-    featured: "true",
+    featured: true,
   },
   {
     name: "Bois Mystique",
@@ -36,7 +36,7 @@ const SAMPLE_PRODUCTS = [
     notesBase: "Labdanum, Ambergris, Leather",
     description: "A labyrinthine forest of ancient woods and aromatic spices. Bois Mystique is for the man who commands every room he enters — a bold, mysterious trail that lingers long after he has departed.",
     imageUrl: "/images/cedar-noir.png",
-    featured: "false",
+    featured: false,
   },
   {
     name: "Aqua Serenissima",
@@ -48,7 +48,7 @@ const SAMPLE_PRODUCTS = [
     notesBase: "Driftwood, White Musk, Ambergris",
     description: "The crystalline waters of the Mediterranean distilled into a single flacon. Aqua Serenissima is a meditation on purity and freedom — the sensation of warm salt air and endless horizon.",
     imageUrl: "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&q=80",
-    featured: "false",
+    featured: false,
   },
   {
     name: "Velvet Amber",
@@ -60,7 +60,7 @@ const SAMPLE_PRODUCTS = [
     notesBase: "Vanilla, Patchouli, Labdanum",
     description: "An opulent amber reverie wrapped in cashmere-soft florals. Velvet Amber is a declaration of sensuality — a fragrance that envelops the wearer in warmth and elegance from the first breath to the last.",
     imageUrl: "/images/amber-mystique.png",
-    featured: "true",
+    featured: true,
   },
   {
     name: "Jardin de Grasse",
@@ -72,7 +72,7 @@ const SAMPLE_PRODUCTS = [
     notesBase: "Oakmoss, Sandalwood, Musk",
     description: "Inspired by the legendary flower fields of Grasse, birthplace of perfumery. Jardin de Grasse is an impressionist painting in scent — lush, green, impossibly romantic, and utterly timeless.",
     imageUrl: "/images/white-jasmine.png",
-    featured: "false",
+    featured: false,
   },
   {
     name: "Noir Encens",
@@ -84,7 +84,7 @@ const SAMPLE_PRODUCTS = [
     notesBase: "Oud, Vetiver, Smoked Wood",
     description: "The sacred smoke of ancient rituals transformed into an extraordinary fragrance. Noir Encens bridges the spiritual and the earthly — a cathedral in darkness, where incense spirals toward vaulted heavens.",
     imageUrl: "/images/black-iris.png",
-    featured: "true",
+    featured: true,
   },
   {
     name: "Citrus Soleil",
@@ -96,7 +96,7 @@ const SAMPLE_PRODUCTS = [
     notesBase: "Vetiver, Cedarwood, Ambergris",
     description: "A sun-drenched Mediterranean morning captured in glass. Citrus Soleil radiates the joie de vivre of the Riviera — bright, effortless, and utterly invigorating.",
     imageUrl: "/images/saffron-dreams.png",
-    featured: "false",
+    featured: false,
   },
 ];
 
