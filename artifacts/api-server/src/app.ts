@@ -29,7 +29,9 @@ app.use(
 //   https://elitedaparfum.vercel.app,https://elitedaparfum.com
 const allowedOrigins = new Set<string>();
 
-(process.env.ALLOWED_ORIGINS ?? "")
+const allowedOriginsStr = process.env.ALLOWED_ORIGINS || "https://elite-da-parfum.vercel.app";
+
+allowedOriginsStr
   .split(",")
   .map(d => d.trim())
   .filter(Boolean)
