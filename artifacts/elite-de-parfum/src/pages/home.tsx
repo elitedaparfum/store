@@ -142,7 +142,7 @@ export default function Home() {
             className="relative"
           >
             <div className="aspect-[4/5] overflow-hidden bg-card">
-              <img src="/images/oud-royale.png" alt="Elite Da Parfum boutique" className="w-full h-full object-cover" />
+              <img src="/images/about-perfumes.jpg" alt="Elite Da Parfum boutique" className="w-full h-full object-cover" />
             </div>
             <div className="absolute -bottom-4 -left-4 lg:-bottom-6 lg:-left-6 w-24 h-24 lg:w-32 lg:h-32 bg-primary/10 border border-primary/20 hidden sm:block" />
             <div className="absolute -top-4 -right-4 lg:-top-6 lg:-right-6 w-16 h-16 lg:w-20 lg:h-20 bg-card border border-border hidden sm:block" />
