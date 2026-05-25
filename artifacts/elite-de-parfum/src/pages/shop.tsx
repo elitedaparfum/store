@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingBag, Check, Loader2, RefreshCw, SlidersHorizontal, X, ChevronDown, Search } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 import { useProducts } from "@/hooks/use-products";
 import { useCart } from "@/context/cart";
 
@@ -51,6 +52,10 @@ export default function Shop() {
 
   return (
     <div className="w-full min-h-screen bg-background">
+      <Helmet>
+        <title>Shop Our Collection | Élite da Parfum</title>
+        <meta name="description" content="Explore our curated collection of authentic niche and designer fragrances. Find your perfect scent." />
+      </Helmet>
 
       {/* ── Page Header ── */}
       <div className="relative pt-28 sm:pt-32 pb-16 sm:pb-20 px-6 overflow-hidden">
@@ -273,7 +278,7 @@ export default function Shop() {
                       <div className="cursor-pointer h-full flex flex-col">
                         <div className="relative aspect-[3/4] overflow-hidden mb-3 sm:mb-4 bg-card">
                           {product.imageUrl ? (
-                            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110" />
+                            <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-card">
                               <ShoppingBag size={40} className="text-border" />

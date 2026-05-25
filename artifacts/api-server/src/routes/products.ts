@@ -47,9 +47,21 @@ function parseImages(raw: string | undefined, fallbackUrl: string): string[] {
 router.get("/products", async (req, res) => {
   try {
     const isAdmin = (req.session as { user?: { isAdmin?: boolean } })?.user?.isAdmin === true;
-    const products = isAdmin
+    const dbProducts = isAdmin
       ? await db.select().from(productsTable).orderBy(productsTable.createdAt)
       : await db.select().from(productsTable).where(eq(productsTable.inStock, true)).orderBy(productsTable.createdAt);
+    
+    const products = dbProducts.map(p => {
+      let imageCount = 0;
+      try { imageCount = JSON.parse(p.images || "[]").length; } catch { /* ignore */ }
+      const imageUrls = Array.from({ length: imageCount }, (_, i) => `/api/images/product/${p.id}/${i}`);
+      return {
+        ...p,
+        imageUrl: imageUrls[0] || p.imageUrl,
+        images: JSON.stringify(imageUrls),
+      };
+    });
+
     res.json({ products });
   } catch (err) {
     req.log.error({ err }, "Error fetching products");
@@ -61,8 +73,19 @@ router.get("/products", async (req, res) => {
 router.get("/products/:id", async (req, res) => {
   try {
     const id = String(req.params.id);
-    const [product] = await db.select().from(productsTable).where(eq(productsTable.id, id)).limit(1);
-    if (!product) { res.status(404).json({ error: "Product not found" }); return; }
+    const [dbProduct] = await db.select().from(productsTable).where(eq(productsTable.id, id)).limit(1);
+    if (!dbProduct) { res.status(404).json({ error: "Product not found" }); return; }
+    
+    let imageCount = 0;
+    try { imageCount = JSON.parse(dbProduct.images || "[]").length; } catch { /* ignore */ }
+    const imageUrls = Array.from({ length: imageCount }, (_, i) => `/api/images/product/${dbProduct.id}/${i}`);
+    
+    const product = {
+      ...dbProduct,
+      imageUrl: imageUrls[0] || dbProduct.imageUrl,
+      images: JSON.stringify(imageUrls),
+    };
+
     res.json({ product });
   } catch (err) {
     req.log.error({ err }, "Error fetching product");
@@ -149,10 +172,24 @@ router.put("/products/:id", requireAdmin, upload.array("newImages", 10), async (
     // Rebuild images if the client sent existingImages (even if empty array)
     if (existingImages !== undefined) {
       const existing = parseImages(existingImages, "");
+      
+      // Get the current database product to retrieve the raw base64 strings
+      const [oldProduct] = await db.select({ images: productsTable.images }).from(productsTable).where(eq(productsTable.id, id)).limit(1);
+      const oldParsed = JSON.parse(oldProduct?.images || "[]");
+
+      const resolvedExisting = existing.map(url => {
+         // If it's one of our lightweight image URLs, extract the index and pull the raw base64 from the DB
+         if (url.startsWith(`/api/images/product/${id}/`)) {
+            const idx = parseInt(url.split("/").pop()!, 10);
+            return oldParsed[idx] || url;
+         }
+         return url;
+      });
+
       const uploaded = (req.files as Express.Multer.File[] ?? []).map(f =>
         `data:${f.mimetype};base64,${f.buffer.toString("base64")}`
       );
-      const allImages = [...existing, ...uploaded];
+      const allImages = [...resolvedExisting, ...uploaded];
       updates.images = JSON.stringify(allImages);
       updates.imageUrl = allImages[0] ?? "";
     } else if (req.files && (req.files as Express.Multer.File[]).length > 0) {

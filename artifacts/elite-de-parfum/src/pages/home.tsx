@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "wouter";
+import { Helmet } from "react-helmet-async";
 import { ArrowRight, Shield, MapPin, Truck } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { BrandTicker } from "@/components/brand-ticker";
@@ -20,6 +21,10 @@ export default function Home() {
 
   return (
     <div className="w-full overflow-x-hidden">
+      <Helmet>
+        <title>Élite da Parfum | Authentic Premium Fragrances</title>
+        <meta name="description" content="Discover curated authentic luxury and niche fragrances. Fast US shipping. Shop Tom Ford, Creed, Chanel, and more." />
+      </Helmet>
 
       {/* ── HERO ── */}
       <section className="relative h-[100dvh] min-h-[640px] w-full overflow-hidden">
@@ -205,7 +210,7 @@ export default function Home() {
                     <div className="cursor-pointer">
                       <div className="relative aspect-[3/4] overflow-hidden mb-4 bg-card">
                         {product.imageUrl ? (
-                          <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110" />
+                          <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110" />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-card to-background" />
                         )}

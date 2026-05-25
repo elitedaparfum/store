@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SiWhatsapp } from "react-icons/si";
 import { ShoppingBag, Check, Loader2, ArrowLeft, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 import { useCart } from "@/context/cart";
 import { Link } from "wouter";
 import { type ApiProduct, useProducts } from "@/hooks/use-products";
@@ -77,6 +78,7 @@ export default function ProductDetail() {
 
   if (notFound || !product) return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background text-center px-6">
+      <Helmet><title>Product Not Found | Élite da Parfum</title></Helmet>
       <h1 className="text-4xl font-serif text-foreground mb-4">Not Found</h1>
       <p className="text-muted-foreground mb-8 font-serif italic">This fragrance does not exist in our collection.</p>
       <Link href="/shop"><span className="text-primary border-b border-primary pb-1 uppercase tracking-widest text-xs cursor-pointer font-mono">Browse Collection</span></Link>
@@ -109,6 +111,10 @@ export default function ProductDetail() {
 
   return (
     <div className="w-full min-h-screen bg-background">
+      <Helmet>
+        <title>{product.name} | Élite da Parfum</title>
+        <meta name="description" content={product.description?.substring(0, 160) || `Buy ${product.name} at Élite da Parfum.`} />
+      </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 lg:pt-36 pb-16 sm:pb-20">
         <Link href="/shop">
           <span className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-[11px] mb-8 sm:mb-10 cursor-pointer w-fit uppercase tracking-widest font-mono">

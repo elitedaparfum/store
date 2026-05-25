@@ -22,6 +22,7 @@ import ResetPassword from "@/pages/reset-password";
 import AdminDashboard from "@/pages/admin/index";
 import AdminProducts from "@/pages/admin/products";
 import ProductForm from "@/pages/admin/product-form";
+import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
 
@@ -47,12 +48,7 @@ function PublicRoutes() {
         <Route path="/shop" component={Shop} />
         <Route path="/product/:id" component={ProductDetail} />
         <Route path="/contact" component={Contact} />
-        <Route>
-          <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-            <h1 className="text-4xl font-serif text-foreground mb-4">Page Not Found</h1>
-            <a href="/" className="text-primary border-b border-primary pb-1 uppercase tracking-widest text-sm">Go Home</a>
-          </div>
-        </Route>
+        <Route component={NotFound} />
       </Switch>
     </Layout>
   );
