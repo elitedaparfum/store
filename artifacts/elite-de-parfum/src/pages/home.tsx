@@ -31,10 +31,10 @@ export default function Home() {
         {/* Background */}
         <div className="absolute inset-0 z-0">
           <img
-            src="/images/hero-bg.jpg"
-            alt=""
+            src="/images/hero-perfume.jpg"
+            alt="Premium Fragrances"
             className="w-full h-full object-cover object-center"
-            style={{ filter: "brightness(0.45)" }}
+            style={{ filter: "brightness(0.65)" }}
           />
           {/* Gradient: strong on left for text, lighter on right to let bottle show */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/20" />
