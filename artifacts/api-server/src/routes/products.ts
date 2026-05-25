@@ -51,13 +51,17 @@ router.get("/products", async (req, res) => {
       ? await db.select().from(productsTable).orderBy(productsTable.createdAt)
       : await db.select().from(productsTable).where(eq(productsTable.inStock, true)).orderBy(productsTable.createdAt);
     
+    const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
+    const host = req.get('host');
+    const baseUrl = `${protocol}://${host}`;
+
     const products = dbProducts.map(p => {
       let imageCount = 0;
       try { imageCount = JSON.parse(p.images || "[]").length; } catch { /* ignore */ }
-      const imageUrls = Array.from({ length: imageCount }, (_, i) => `/api/images/product/${p.id}/${i}`);
+      const imageUrls = Array.from({ length: imageCount }, (_, i) => `${baseUrl}/api/images/product/${p.id}/${i}`);
       return {
         ...p,
-        imageUrl: imageUrls[0] || p.imageUrl,
+        imageUrl: imageUrls[0] || (p.imageUrl?.startsWith('/') ? `${baseUrl}${p.imageUrl}` : p.imageUrl),
         images: JSON.stringify(imageUrls),
       };
     });
@@ -76,13 +80,17 @@ router.get("/products/:id", async (req, res) => {
     const [dbProduct] = await db.select().from(productsTable).where(eq(productsTable.id, id)).limit(1);
     if (!dbProduct) { res.status(404).json({ error: "Product not found" }); return; }
     
+    const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
+    const host = req.get('host');
+    const baseUrl = `${protocol}://${host}`;
+
     let imageCount = 0;
     try { imageCount = JSON.parse(dbProduct.images || "[]").length; } catch { /* ignore */ }
-    const imageUrls = Array.from({ length: imageCount }, (_, i) => `/api/images/product/${dbProduct.id}/${i}`);
+    const imageUrls = Array.from({ length: imageCount }, (_, i) => `${baseUrl}/api/images/product/${dbProduct.id}/${i}`);
     
     const product = {
       ...dbProduct,
-      imageUrl: imageUrls[0] || dbProduct.imageUrl,
+      imageUrl: imageUrls[0] || (dbProduct.imageUrl?.startsWith('/') ? `${baseUrl}${dbProduct.imageUrl}` : dbProduct.imageUrl),
       images: JSON.stringify(imageUrls),
     };
 
@@ -178,8 +186,8 @@ router.put("/products/:id", requireAdmin, upload.array("newImages", 10), async (
       const oldParsed = JSON.parse(oldProduct?.images || "[]");
 
       const resolvedExisting = existing.map(url => {
-         // If it's one of our lightweight image URLs, extract the index and pull the raw base64 from the DB
-         if (url.startsWith(`/api/images/product/${id}/`)) {
+         // If it's one of our lightweight image URLs (even absolute), extract the index and pull the raw base64 from the DB
+         if (url.includes(`/api/images/product/${id}/`)) {
             const idx = parseInt(url.split("/").pop()!, 10);
             return oldParsed[idx] || url;
          }
