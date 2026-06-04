@@ -111,7 +111,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: "-100%" }}
             transition={{ type: "tween", duration: 0.3 }}
-            className="fixed inset-0 z-40 bg-background flex flex-col md:hidden"
+            className="fixed inset-0 z-[60] bg-background flex flex-col md:hidden"
           >
             <div className="relative flex items-center justify-center px-6 py-5 border-b border-border">
               <BrandLogo className="h-10" />
