@@ -35,65 +35,73 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col font-sans">
-      <header className={`fixed top-0 w-full z-50 transition-all duration-500 ${isScrolled ? "bg-background/90 backdrop-blur-md border-b border-border py-3 shadow-md" : "bg-transparent border-b border-transparent py-5"}`}>
-        <div className="container mx-auto px-6 flex items-center justify-between">
-          <button className="md:hidden text-foreground p-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} data-testid="button-mobile-menu">
-            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+      <header className={`fixed top-0 w-full z-50 transition-all duration-500 ${isScrolled ? "bg-background/95 backdrop-blur-md border-b border-border py-3 shadow-md" : "bg-gradient-to-b from-background/70 to-transparent backdrop-blur-[2px] border-b border-transparent py-5"}`}>
+        <div className="mx-auto px-6 sm:px-10 lg:px-14 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+          {/* Left — nav / mobile hamburger */}
+          <div className="flex items-center min-w-0">
+            <button className="md:hidden text-foreground p-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} data-testid="button-mobile-menu">
+              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+            <nav className="hidden md:flex items-center gap-7 overflow-hidden">
+              {navLinks.map(link => (
+                <Link key={link.href} href={link.href}>
+                  <span className={`text-[11px] uppercase tracking-[0.2em] transition-colors cursor-pointer whitespace-nowrap ${location === link.href ? "text-primary" : "text-muted-foreground hover:text-primary"}`} data-testid={`link-nav-${link.label.toLowerCase()}`}>
+                    {link.label}
+                  </span>
+                </Link>
+              ))}
+            </nav>
+          </div>
 
-          <nav className="hidden md:flex items-center gap-10">
-            {navLinks.map(link => (
-              <Link key={link.href} href={link.href}>
-                <span className={`text-[11px] uppercase tracking-[0.2em] transition-colors cursor-pointer font-mono ${location === link.href ? "text-primary" : "text-foreground/70 hover:text-primary"}`} data-testid={`link-nav-${link.label.toLowerCase()}`}>
-                  {link.label}
-                </span>
-              </Link>
-            ))}
-          </nav>
-
+          {/* Center — logo + wordmark */}
           <Link href="/">
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer">
+            <div className="justify-self-center cursor-pointer">
               <BrandLogo
-                className={`transition-all duration-500 ${isScrolled ? "h-9 md:h-11" : "h-11 md:h-13"}`}
+                showText
+                className={`transition-all duration-500 ${isScrolled ? "h-7 md:h-8" : "h-8 md:h-9"}`}
+                textClassName="text-base sm:text-lg md:text-xl"
               />
             </div>
           </Link>
 
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="text-foreground/70 hover:text-primary transition-colors p-2 rounded-full hover:bg-muted"
-              data-testid="button-theme-toggle"
-            >
-              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-
+          {/* Right — account, theme, bag */}
+          <div className="flex items-center gap-4 sm:gap-5 justify-self-end">
             {user ? (
               <Link href={user.isAdmin ? "/admin" : "/login"}>
-                <button className="hidden md:flex items-center gap-1.5 text-foreground/70 hover:text-primary transition-colors p-2 rounded-full hover:bg-muted" data-testid="btn-user-menu">
-                  {user.isAdmin ? <LayoutDashboard size={17} /> : <User size={17} />}
+                <button className="hidden md:flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors" data-testid="btn-user-menu" aria-label="Account">
+                  {user.isAdmin ? <LayoutDashboard size={16} /> : <User size={16} />}
                 </button>
               </Link>
             ) : (
               <Link href="/login">
-                <button className="hidden md:flex items-center text-[10px] uppercase tracking-[0.18em] text-foreground/60 hover:text-primary transition-colors px-3 py-1.5 border border-transparent hover:border-primary/40 font-mono" data-testid="btn-login-nav">
+                <button className="hidden sm:flex items-center text-[10px] uppercase tracking-[0.15em] text-muted-foreground hover:text-primary transition-colors font-mono" data-testid="btn-login-nav">
                   Sign In
                 </button>
               </Link>
             )}
 
             <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="text-muted-foreground hover:text-primary transition-colors flex items-center"
+              data-testid="button-theme-toggle"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+
+            <button
               onClick={openCart}
-              className="relative text-foreground/70 hover:text-primary transition-colors p-2 rounded-full hover:bg-muted"
+              className="relative flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-[11px] uppercase tracking-[0.1em] font-mono"
               data-testid="button-open-cart"
             >
-              <ShoppingBag size={18} />
+              <span className="hidden sm:inline">Bag</span>
+              <ShoppingBag size={16} className="sm:hidden" />
               {totalItems > 0 && (
                 <motion.span
                   key={totalItems}
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[9px] font-mono w-4 h-4 rounded-full flex items-center justify-center leading-none"
+                  className="bg-primary text-primary-foreground text-[9px] font-mono min-w-4 h-4 px-1 rounded-full flex items-center justify-center leading-none"
                   data-testid="cart-count-badge"
                 >
                   {totalItems > 9 ? "9+" : totalItems}
@@ -114,7 +122,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             className="fixed inset-0 z-[60] bg-background flex flex-col md:hidden"
           >
             <div className="relative flex items-center justify-center px-6 py-5 border-b border-border">
-              <BrandLogo className="h-10" />
+              <BrandLogo showText className="h-8" textClassName="text-lg" />
               <button onClick={() => setMobileMenuOpen(false)} className="absolute right-5 text-foreground p-1" aria-label="Close menu"><X size={22} /></button>
             </div>
             <nav className="flex flex-col gap-1 p-6 flex-1">
@@ -149,7 +157,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <footer className="bg-card text-card-foreground border-t border-border">
         <div className="container mx-auto px-6 py-16 md:py-20 grid grid-cols-1 md:grid-cols-3 gap-12">
           <div className="flex flex-col items-center md:items-start space-y-5">
-            <BrandLogo className="h-14" />
+            <BrandLogo showText className="h-10" textClassName="text-2xl" />
             <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
               Hattiesburg's luxury fragrance boutique. Premium authentic scents — Tom Ford, Chanel, D&G &amp; more. US shipping only.
             </p>
