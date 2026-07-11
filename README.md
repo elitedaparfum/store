@@ -1,5 +1,8 @@
 # Élite da Parfum
 
+
+
+Under construction
 A production-ready, high-performance luxury e-commerce platform for authentic premium and niche fragrances.
 
 ## 🚀 Architecture Overview
