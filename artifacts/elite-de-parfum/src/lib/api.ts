@@ -1,5 +1,6 @@
-// In production on Vercel, VITE_API_URL must point to the Railway backend.
-// We hardcode the fallback so the site works even if the env var is missing.
+// Backend runs as a Vercel serverless function at /api/* on the same origin.
+// VITE_API_URL should stay unset in production so requests are same-origin;
+// only set it for local dev against a separate backend host.
 const base =
   (import.meta.env.VITE_API_URL as string | undefined) || "";
 
