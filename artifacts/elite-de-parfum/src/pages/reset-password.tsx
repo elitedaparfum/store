@@ -96,7 +96,7 @@ export default function ResetPassword() {
           </p>
         </div>
 
-        <div className="bg-card/50 backdrop-blur-sm border border-border p-8 shadow-2xl relative overflow-hidden group">
+        <div className="bg-card/50 backdrop-blur-sm border border-border p-8 relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
           {success ? (
@@ -154,7 +154,7 @@ export default function ResetPassword() {
               <button
                 type="submit"
                 disabled={resetPasswordMutation.isPending}
-                className="w-full bg-primary text-primary-foreground py-3 text-xs font-mono uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-[0.98] disabled:opacity-50 mt-4 shadow-lg shadow-primary/20"
+                className="w-full bg-primary text-primary-foreground py-3 text-xs font-mono uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-[0.98] disabled:opacity-50 mt-4"
               >
                 {resetPasswordMutation.isPending ? "Updating..." : "Reset Password"}
               </button>

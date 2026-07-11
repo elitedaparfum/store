@@ -52,7 +52,7 @@ export function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "tween", duration: 0.35, ease: "easeInOut" }}
-            className="fixed top-0 right-0 h-full w-full max-w-md bg-background border-l border-border z-50 flex flex-col shadow-2xl"
+            className="fixed top-0 right-0 h-full w-full max-w-md bg-background border-l border-border z-50 flex flex-col"
             data-testid="cart-drawer"
           >
             {/* Header */}
@@ -184,7 +184,7 @@ export function CartDrawer() {
                 </p>
 
                 {/* Refund Policy Agreement */}
-                <div className="bg-muted/40 border border-border p-3 rounded-sm">
+                <div className="bg-muted/40 border border-border p-3">
                   <p className="text-[10px] text-muted-foreground leading-relaxed mb-2.5">
                     <span className="text-foreground font-semibold">All Sales Are Final.</span> We do not issue refunds to credit cards, debit cards, or digital wallets for change of mind, dislike of a scent, or accidental orders.
                   </p>
