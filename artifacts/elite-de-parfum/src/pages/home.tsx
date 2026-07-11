@@ -27,67 +27,62 @@ export default function Home() {
       </Helmet>
 
       {/* ── HERO ── */}
-      <section className="relative h-[100dvh] min-h-[640px] w-full overflow-hidden">
-        {/* Background */}
+      <section className="relative h-[92vh] min-h-[600px] w-full overflow-hidden flex items-end lg:items-center">
+        {/* Video background */}
         <div className="absolute inset-0 z-0">
-          <img
-            src="/images/hero-perfume.jpg"
-            alt="Premium Fragrances"
+          <video
+            src="/hero-video.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
             className="w-full h-full object-cover object-center"
-            style={{ filter: "brightness(0.65)" }}
           />
-          {/* Gradient: strong on left for text, lighter on right to let bottle show */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
+          {/* Theme-aware ivory/charcoal scrim — stronger on left (desktop) / bottom (mobile) */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background lg:bg-gradient-to-r lg:from-background/90 lg:via-background/50 lg:to-background/10" />
         </div>
 
-        {/* Content — left-aligned on desktop, top-centered on mobile */}
-        <div className="relative z-10 h-full flex items-start lg:items-center">
-          <div className="px-6 sm:px-10 lg:px-20 xl:px-32 max-w-2xl w-full pt-28 lg:pt-0">
+        {/* Content — left-aligned & centered on desktop, bottom on mobile */}
+        <div className="relative z-10 w-full pb-16 lg:pb-0">
+          <div className="px-6 sm:px-10 lg:px-14 max-w-[560px]">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7, delay: 0.1 }}
-              className="flex items-center gap-3 mb-5 sm:mb-7"
+              className="flex items-center gap-3.5 mb-7"
             >
-              <div className="h-px w-8 sm:w-12 bg-primary/70" />
-              <span className="text-primary text-[9px] sm:text-[10px] uppercase tracking-[0.25em] sm:tracking-[0.35em] font-mono">Elite Da Parfum · Hattiesburg, MS</span>
+              <div className="h-px w-7 bg-primary" />
+              <span className="text-primary text-[10px] uppercase tracking-[0.3em] font-sans">Élite da Parfum · Est. Hattiesburg</span>
             </motion.div>
 
             <motion.h1
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-[clamp(2.4rem,3.8vw,3.8rem)] font-serif text-white leading-[1.1] mb-4 sm:mb-6 tracking-tight"
+              className="font-serif font-normal text-foreground text-[40px] sm:text-[52px] lg:text-[68px] leading-[1.08] tracking-[-0.01em] mb-6"
             >
-              The Essence of<br />
-              <span className="text-primary italic">Opulence</span>
+              The art of<br />
+              <em className="text-primary italic">quiet</em> luxury.
             </motion.h1>
 
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.7, delay: 0.35 }}
-              className="text-white/65 text-sm sm:text-base font-serif italic mb-8 sm:mb-10 max-w-xs sm:max-w-sm"
+              className="text-muted-foreground text-sm sm:text-[15px] leading-[1.8] font-light mb-8 max-w-[400px]"
             >
-              Tom Ford, Chanel, D&amp;G &amp; more — delivered across the US
+              Hand-curated fragrance from Chanel, Dior, and niche ateliers — delivered with care across the US.
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.45 }}
-              className="flex flex-col sm:flex-row gap-3"
             >
               <Link href="/shop">
-                <span className="inline-flex items-center justify-center gap-3 bg-primary text-primary-foreground px-8 py-4 uppercase tracking-[0.15em] text-[11px] font-semibold hover:bg-primary/90 transition-all duration-300 cursor-pointer whitespace-nowrap w-full sm:w-auto" data-testid="link-hero-shop">
-                  Shop the Collection
-                  <ArrowRight size={13} />
-                </span>
-              </Link>
-              <Link href="/contact">
-                <span className="inline-flex items-center justify-center gap-3 border border-white/40 text-white px-8 py-4 uppercase tracking-[0.15em] text-[11px] hover:border-primary hover:text-primary transition-all duration-300 cursor-pointer backdrop-blur-sm whitespace-nowrap w-full sm:w-auto">
-                  Contact Us
+                <span className="group inline-flex items-center gap-2 text-foreground border-b border-foreground pb-1.5 uppercase tracking-[0.2em] text-[11px] hover:text-primary hover:border-primary transition-colors duration-300 cursor-pointer" data-testid="link-hero-shop">
+                  Shop the Edit
+                  <ArrowRight size={13} className="transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
               </Link>
             </motion.div>
@@ -95,8 +90,8 @@ export default function Home() {
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center">
-          <div className="w-px h-10 sm:h-12 bg-gradient-to-b from-transparent to-primary/60 animate-pulse" />
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 hidden lg:flex flex-col items-center">
+          <div className="w-px h-12 bg-gradient-to-b from-transparent to-primary/60 animate-pulse" />
         </div>
       </section>
 
