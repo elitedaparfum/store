@@ -4,6 +4,7 @@
   "outputDirectory": "artifacts/elite-de-parfum/dist/public",
   "framework": null,
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.ts" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
