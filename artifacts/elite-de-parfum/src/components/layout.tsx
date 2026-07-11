@@ -35,7 +35,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col font-sans">
-      <header className={`fixed top-0 w-full z-50 transition-all duration-500 ${isScrolled ? "bg-background/95 backdrop-blur-md border-b border-border py-3 shadow-md" : "bg-gradient-to-b from-background/70 to-transparent backdrop-blur-[2px] border-b border-transparent py-5"}`}>
+      <header className={`fixed top-0 w-full z-50 transition-all duration-500 ${isScrolled ? "bg-background/95 backdrop-blur-md border-b border-border py-3" : "bg-gradient-to-b from-background/70 to-transparent backdrop-blur-[2px] border-b border-transparent py-5"}`}>
         <div className="mx-auto px-6 sm:px-10 lg:px-14 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
           {/* Left — nav / mobile hamburger */}
           <div className="flex items-center min-w-0">

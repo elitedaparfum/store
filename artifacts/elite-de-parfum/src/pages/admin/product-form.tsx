@@ -231,7 +231,7 @@ export default function ProductForm() {
             onDrop={handleDrop}
             onDragOver={e => e.preventDefault()}
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-border hover:border-primary transition-colors cursor-pointer rounded-sm p-6 flex flex-col items-center justify-center gap-2 text-center"
+            className="border-2 border-dashed border-border hover:border-primary transition-colors cursor-pointer p-6 flex flex-col items-center justify-center gap-2 text-center"
           >
             <Upload size={22} className="text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Drag &amp; drop images here, or <span className="text-primary underline">browse files</span></p>
