@@ -1,8 +1,64 @@
+import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { Helmet } from "react-helmet-async";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
+
+/** Frame (seconds) shown as the still when autoplay is blocked (e.g. iOS Low Power Mode). */
+const HERO_POSTER_TIME = 1.2;
+
+function HeroVideo() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [blocked, setBlocked] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const tryPlay = () => {
+      const p = video.play();
+      if (p !== undefined) {
+        p.catch(() => {
+          // Autoplay refused — park on a chosen frame and offer manual play
+          video.currentTime = HERO_POSTER_TIME;
+          setBlocked(true);
+        });
+      }
+    };
+    if (video.readyState >= 2) tryPlay();
+    else video.addEventListener("canplay", tryPlay, { once: true });
+    return () => video.removeEventListener("canplay", tryPlay);
+  }, []);
+
+  const handleManualPlay = () => {
+    videoRef.current?.play().then(() => setBlocked(false)).catch(() => {});
+  };
+
+  return (
+    <>
+      <video
+        ref={videoRef}
+        src="/hero-video.mp4"
+        muted
+        loop
+        playsInline
+        preload="auto"
+        className="w-full h-full object-cover object-center"
+      />
+      {blocked && (
+        <button
+          onClick={handleManualPlay}
+          aria-label="Play film"
+          className="absolute inset-0 z-20 flex items-center justify-center group/play cursor-pointer"
+        >
+          <span className="w-20 h-20 rounded-full border border-foreground/40 bg-background/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group-hover/play:border-primary group-hover/play:bg-background/50">
+            <Play size={22} className="text-foreground ml-1 transition-colors duration-300 group-hover/play:text-primary" fill="currentColor" />
+          </span>
+        </button>
+      )}
+    </>
+  );
+}
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -82,15 +138,8 @@ export default function Home() {
       {/* ── HERO ── */}
       <section className="relative h-screen min-h-[640px] w-full overflow-hidden flex items-end">
         <div className="absolute inset-0 z-0">
-          <video
-            src="/hero-video.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="w-full h-full object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          <HeroVideo />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent pointer-events-none" />
         </div>
 
         <div className="relative z-10 w-full px-6 sm:px-10 lg:px-16 pb-20 sm:pb-24 lg:pb-28">
@@ -211,52 +260,63 @@ export default function Home() {
         </section>
       )}
 
-      {/* ── MAISON ── */}
+      {/* ── MAISON — pure typography ── */}
       <section className="bg-card border-y border-border py-24 sm:py-32 lg:py-40 px-6 sm:px-10 lg:px-16">
-        <div className="max-w-[1500px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-0 items-center">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 1.1 }}
-            className="lg:col-span-5"
-          >
-            <div className="aspect-[4/5] overflow-hidden bg-background">
-              <img src="/images/about-perfumes.jpg" alt="Inside the Élite da Parfum boutique" className="w-full h-full object-cover" />
-            </div>
-            <p className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground font-mono mt-4">
-              The boutique — Hattiesburg, Mississippi
-            </p>
-          </motion.div>
-
+        <div className="max-w-[1500px] mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
             variants={stagger}
-            className="lg:col-span-5 lg:col-start-8"
           >
-            <motion.div variants={fadeUp} className="mb-7">
+            <motion.div variants={fadeUp} className="mb-10">
               <Eyebrow>No. 03 — The Maison</Eyebrow>
             </motion.div>
-            <motion.h2 variants={fadeUp} className="font-serif text-3xl sm:text-4xl lg:text-5xl text-foreground leading-[1.15] mb-8">
-              A boutique built on<br />a single <em className="text-primary italic">standard</em>.
-            </motion.h2>
-            <motion.p variants={fadeUp} className="text-muted-foreground text-sm sm:text-[15px] leading-[1.95] font-light mb-5 max-w-[420px]">
-              Every fragrance in this house is genuine — sourced from authorized
-              distributors, verified before it reaches the shelf. Tom Ford, Chanel,
-              Creed, and the niche names collectors ask for by heart.
-            </motion.p>
-            <motion.p variants={fadeUp} className="text-muted-foreground text-sm sm:text-[15px] leading-[1.95] font-light mb-10 max-w-[420px]">
-              Visit us in Hattiesburg to try before you buy, or order from anywhere
-              in the United States — insured, discreet, and never an imitation.
-            </motion.p>
-            <motion.div variants={fadeUp}>
-              <Link href="/contact">
-                <span className="lux-underline inline-flex items-center gap-3 text-foreground uppercase tracking-[0.3em] text-[10px] cursor-pointer">
-                  Visit the Boutique <ArrowRight size={12} className="text-primary" />
-                </span>
-              </Link>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-y-12 lg:gap-x-12">
+              <motion.h2
+                variants={fadeUp}
+                className="lg:col-span-7 font-serif text-4xl sm:text-5xl lg:text-[68px] text-foreground leading-[1.08] tracking-[-0.01em]"
+              >
+                A boutique built on a single <em className="text-primary italic">standard</em> — nothing on the shelf we would not wear ourselves.
+              </motion.h2>
+
+              <div className="lg:col-span-4 lg:col-start-9 lg:pt-4">
+                <motion.p variants={fadeUp} className="text-muted-foreground text-sm sm:text-[15px] leading-[1.95] font-light mb-5">
+                  Every fragrance in this house is genuine — sourced from authorized
+                  distributors, verified before it reaches the shelf. Tom Ford, Chanel,
+                  Creed, and the niche names collectors ask for by heart.
+                </motion.p>
+                <motion.p variants={fadeUp} className="text-muted-foreground text-sm sm:text-[15px] leading-[1.95] font-light mb-10">
+                  Visit us in Hattiesburg to try before you buy, or order from anywhere
+                  in the United States — insured, discreet, and never an imitation.
+                </motion.p>
+                <motion.div variants={fadeUp}>
+                  <Link href="/contact">
+                    <span className="lux-underline inline-flex items-center gap-3 text-foreground uppercase tracking-[0.3em] text-[10px] cursor-pointer">
+                      Visit the Boutique <ArrowRight size={12} className="text-primary" />
+                    </span>
+                  </Link>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Meta ledger */}
+            <motion.div
+              variants={fadeUp}
+              className="mt-16 sm:mt-20 pt-8 border-t border-border grid grid-cols-2 sm:grid-cols-4 gap-8"
+            >
+              {[
+                { k: "Establishment", v: "Hattiesburg, MS" },
+                { k: "Provenance", v: "Authorized distributors" },
+                { k: "Shipping", v: "United States, insured" },
+                { k: "Counsel", v: "In person & WhatsApp" },
+              ].map(item => (
+                <div key={item.k}>
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-primary font-mono mb-2.5">{item.k}</p>
+                  <p className="font-serif text-foreground text-base sm:text-lg">{item.v}</p>
+                </div>
+              ))}
             </motion.div>
           </motion.div>
         </div>
@@ -319,13 +379,49 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── HOUSES — quiet single line ── */}
-      <section className="bg-popover border-y border-border py-16 sm:py-20 px-6">
-        <div className="max-w-5xl mx-auto text-center">
-          <p className="text-[9px] uppercase tracking-[0.35em] text-muted-foreground font-mono mb-8">Among the houses we carry</p>
-          <p className="font-serif text-lg sm:text-xl lg:text-2xl text-muted-foreground leading-[2] max-w-4xl mx-auto">
-            Tom Ford <span className="text-primary/50 mx-1">·</span> Chanel <span className="text-primary/50 mx-1">·</span> Creed <span className="text-primary/50 mx-1">·</span> Dior <span className="text-primary/50 mx-1">·</span> Hermès <span className="text-primary/50 mx-1">·</span> Valentino <span className="text-primary/50 mx-1">·</span> Prada <span className="text-primary/50 mx-1">·</span> Armani <span className="text-primary/50 mx-1">·</span> Rasasi <span className="text-primary/50 mx-1">·</span> Lattafa <span className="text-primary/50 mx-1">·</span> Afnan
-          </p>
+      {/* ── HOUSES — hairline plaque lattice ── */}
+      <section className="bg-popover border-y border-border py-24 sm:py-32 px-6 sm:px-10 lg:px-16">
+        <div className="max-w-[1200px] mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+            className="mb-14 sm:mb-16"
+          >
+            <motion.div variants={fadeUp} className="mb-7">
+              <Eyebrow>No. 05 — The Houses</Eyebrow>
+            </motion.div>
+            <motion.h2 variants={fadeUp} className="font-serif text-3xl sm:text-4xl lg:text-5xl text-foreground leading-[1.1]">
+              Names worth <em className="text-primary italic">carrying</em>.
+            </motion.h2>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 1 }}
+            className="border border-border bg-border grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px"
+          >
+            {["Tom Ford", "Chanel", "Creed", "Dior", "Hermès", "Valentino", "Prada", "Armani", "Rasasi", "Lattafa", "Afnan"].map(house => (
+              <div
+                key={house}
+                className="bg-popover flex items-center justify-center py-10 sm:py-12 px-4 group cursor-default"
+              >
+                <span className="font-serif text-lg sm:text-xl text-muted-foreground transition-colors duration-500 group-hover:text-primary text-center">
+                  {house}
+                </span>
+              </div>
+            ))}
+            <Link href="/shop">
+              <div className="bg-popover h-full flex items-center justify-center py-10 sm:py-12 px-4 group cursor-pointer">
+                <span className="inline-flex items-center gap-2.5 text-[10px] uppercase tracking-[0.3em] font-mono text-primary">
+                  & Others <ArrowRight size={11} className="transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
+              </div>
+            </Link>
+          </motion.div>
         </div>
       </section>
 
