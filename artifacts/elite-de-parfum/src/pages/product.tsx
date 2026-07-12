@@ -176,7 +176,7 @@ export default function ProductDetail() {
               </div>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-serif text-foreground mb-4 leading-tight">{product.name}</h1>
               <div className="flex items-baseline gap-3">
-                <p className="text-2xl sm:text-3xl text-foreground font-mono">${currentPrice}</p>
+                <p className="text-2xl sm:text-3xl text-primary font-mono">${currentPrice}</p>
                 {hasDiscount && (
                   <span className="text-muted-foreground line-through font-mono text-lg">${originalPrice}</span>
                 )}
@@ -297,7 +297,7 @@ export default function ProductDetail() {
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center gap-4 mb-8 sm:mb-10">
               <div className="h-px w-8 bg-primary" />
-              <h2 className="text-xl sm:text-2xl font-serif text-foreground">You May Also Like</h2>
+              <h2 className="text-xl sm:text-2xl font-serif text-foreground">You May Also <em className="text-primary italic">Like</em></h2>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-8">
               {related.map(rel => {
@@ -307,7 +307,7 @@ export default function ProductDetail() {
                 return (
                   <Link key={rel.id} href={`/product/${rel.id}`}>
                     <div className="group cursor-pointer">
-                      <div className="relative aspect-[3/4] overflow-hidden bg-background mb-3 sm:mb-4">
+                      <div className="lux-frame relative aspect-[3/4] overflow-hidden bg-background border border-border/60 mb-3 sm:mb-4">
                         {relImages[0] ? (
                           <img src={relImages[0]} alt={rel.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                         ) : (

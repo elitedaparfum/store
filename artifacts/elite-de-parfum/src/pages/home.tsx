@@ -40,6 +40,8 @@ export default function Home() {
           />
           {/* Theme-aware ivory/charcoal scrim — stronger on left (desktop) / bottom (mobile) */}
           <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background lg:bg-gradient-to-r lg:from-background/90 lg:via-background/50 lg:to-background/10" />
+          {/* Inset hairline plaque frame */}
+          <div className="absolute inset-4 sm:inset-6 border border-foreground/10 pointer-events-none hidden sm:block" />
         </div>
 
         {/* Content — left-aligned & centered on desktop, bottom on mobile */}
@@ -112,7 +114,7 @@ export default function Home() {
               <span className="text-primary text-[10px] uppercase tracking-[0.3em] font-mono">About Us</span>
             </motion.div>
             <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif text-foreground mb-6 leading-tight">
-              Hattiesburg's<br />Luxury Fragrance Boutique
+              Hattiesburg's<br />Luxury <em className="text-primary italic">Fragrance</em> Boutique
             </motion.h2>
             <motion.p variants={fadeUp} className="text-muted-foreground text-base sm:text-lg leading-relaxed font-serif italic mb-5">
               Based in Hattiesburg, MS, we curate the world's most sought-after luxury fragrances — 100% authentic, hand-selected from the premier houses of perfumery.
@@ -181,7 +183,7 @@ export default function Home() {
                   <span className="text-primary text-[10px] uppercase tracking-[0.3em] font-mono">Now Available</span>
                 </motion.div>
                 <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl md:text-5xl font-serif text-foreground">
-                  Current Stock
+                  Current <em className="text-primary italic">Stock</em>
                 </motion.h2>
               </motion.div>
               <Link href="/shop">
@@ -203,17 +205,17 @@ export default function Home() {
                 >
                   <Link href={`/product/${product.id}`}>
                     <div className="cursor-pointer">
-                      <div className="relative aspect-[3/4] overflow-hidden mb-4 bg-card">
+                      <div className="lux-frame relative aspect-[3/4] overflow-hidden mb-4 bg-card border border-border/60">
                         {product.imageUrl ? (
-                          <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110" />
+                          <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.06]" />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-card to-background" />
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                        <div className="absolute top-4 left-4">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        <div className="absolute top-4 left-4 z-20">
                           <span className="bg-background/80 backdrop-blur-sm text-foreground text-[9px] uppercase tracking-widest px-2 py-1 font-mono">{product.family}</span>
                         </div>
-                        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 translate-y-full group-hover:translate-y-0 transition-transform duration-400">
+                        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 translate-y-full group-hover:translate-y-0 transition-transform duration-400 z-20">
                           <span className="inline-flex items-center gap-2 text-white text-xs uppercase tracking-widest">
                             View Details <ArrowRight size={12} />
                           </span>
@@ -285,7 +287,7 @@ export default function Home() {
               <span className="text-primary text-[10px] uppercase tracking-[0.3em] font-mono">How We Operate</span>
               <div className="h-px w-10 bg-primary" />
             </motion.div>
-            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-serif text-foreground">Our Promise</motion.h2>
+            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-serif text-foreground">Our <em className="text-primary italic">Promise</em></motion.h2>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">

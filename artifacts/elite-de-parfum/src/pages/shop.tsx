@@ -69,7 +69,7 @@ export default function Shop() {
             <span className="text-primary text-[9px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.3em] font-mono">Hattiesburg, MS</span>
             <div className="h-px w-8 sm:w-12 bg-primary/50" />
           </div>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif text-foreground mb-3 sm:mb-4">The Collection</h1>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif text-foreground mb-3 sm:mb-4">The <em className="text-primary italic">Collection</em></h1>
           <p className="text-muted-foreground max-w-xl mx-auto font-serif italic text-base sm:text-lg">
             Premium fragrances — 100% authentic. US domestic shipping only.
           </p>
@@ -276,20 +276,20 @@ export default function Shop() {
                     transition={{ duration: 0.4 }} className="group" data-testid={`card-product-${product.id}`}>
                     <Link href={`/product/${product.id}`}>
                       <div className="cursor-pointer h-full flex flex-col">
-                        <div className="relative aspect-[3/4] overflow-hidden mb-3 sm:mb-4 bg-card">
+                        <div className="lux-frame relative aspect-[3/4] overflow-hidden mb-3 sm:mb-4 bg-card border border-border/60">
                           {product.imageUrl ? (
-                            <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110" />
+                            <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.06]" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-card">
                               <ShoppingBag size={40} className="text-border" />
                             </div>
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 z-10">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 z-20">
                             <span className="bg-background/80 backdrop-blur-sm text-foreground text-[8px] sm:text-[9px] uppercase tracking-[0.1em] sm:tracking-[0.15em] px-1.5 sm:px-2 py-1 font-mono">{product.family}</span>
                           </div>
                           {/* Quick add — tap on mobile, hover on desktop */}
-                          <div className="absolute bottom-0 left-0 right-0 sm:translate-y-full sm:group-hover:translate-y-0 sm:transition-transform sm:duration-300 z-10">
+                          <div className="absolute bottom-0 left-0 right-0 sm:translate-y-full sm:group-hover:translate-y-0 sm:transition-transform sm:duration-300 z-20">
                             <button onClick={(e) => handleQuickAdd(e, product)}
                               className={`w-full py-3 flex items-center justify-center gap-2 uppercase tracking-widest text-[9px] sm:text-[10px] font-semibold transition-all duration-300 font-mono ${justAdded ? "bg-primary text-primary-foreground" : "bg-background/95 backdrop-blur-sm text-foreground hover:bg-primary hover:text-primary-foreground"}`}
                               data-testid={`btn-quick-add-${product.id}`}>

@@ -35,17 +35,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col font-sans">
-      <header className={`fixed top-0 w-full z-50 transition-all duration-500 ${isScrolled ? "bg-background/95 backdrop-blur-md border-b border-border py-3" : "bg-gradient-to-b from-background/70 to-transparent backdrop-blur-[2px] border-b border-transparent py-5"}`}>
-        <div className="mx-auto px-6 sm:px-10 lg:px-14 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+      <header className={`fixed top-0 w-full z-50 transition-all duration-500 ${isScrolled ? "bg-background/95 backdrop-blur-md border-b border-border" : "bg-gradient-to-b from-background/70 to-transparent backdrop-blur-[2px] border-b border-transparent"}`}>
+        {/* Announcement bar — collapses on scroll */}
+        <div className={`overflow-hidden transition-all duration-500 border-b ${isScrolled ? "max-h-0 border-transparent" : "max-h-9 border-border/40"}`}>
+          <div className="py-2 px-6 text-center bg-background/60">
+            <span className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground font-mono">
+              100% Authentic <span className="text-primary/60 mx-2">·</span> US Shipping <span className="text-primary/60 mx-2">·</span> Hattiesburg, MS
+            </span>
+          </div>
+        </div>
+        <div className={`mx-auto px-6 sm:px-10 lg:px-14 grid grid-cols-[1fr_auto_1fr] items-center gap-4 transition-all duration-500 ${isScrolled ? "py-3" : "py-5"}`}>
           {/* Left — nav / mobile hamburger */}
           <div className="flex items-center min-w-0">
             <button className="md:hidden text-foreground p-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} data-testid="button-mobile-menu">
               {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
-            <nav className="hidden md:flex items-center gap-7 overflow-hidden">
+            <nav className="hidden md:flex items-center gap-8 overflow-hidden">
               {navLinks.map(link => (
                 <Link key={link.href} href={link.href}>
-                  <span className={`text-[11px] uppercase tracking-[0.2em] transition-colors cursor-pointer whitespace-nowrap ${location === link.href ? "text-primary" : "text-muted-foreground hover:text-primary"}`} data-testid={`link-nav-${link.label.toLowerCase()}`}>
+                  <span className={`lux-underline text-[11px] uppercase tracking-[0.2em] transition-colors cursor-pointer whitespace-nowrap ${location === link.href ? "text-primary lux-underline-active" : "text-muted-foreground hover:text-foreground"}`} data-testid={`link-nav-${link.label.toLowerCase()}`}>
                     {link.label}
                   </span>
                 </Link>
@@ -155,47 +163,61 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1">{children}</main>
 
       <footer className="bg-card text-card-foreground border-t border-border">
-        <div className="container mx-auto px-6 py-16 md:py-20 grid grid-cols-1 md:grid-cols-3 gap-12">
-          <div className="flex flex-col items-center md:items-start space-y-5">
-            <BrandLogo showText className="h-10" textClassName="text-2xl" />
-            <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-              Hattiesburg's luxury fragrance boutique. Premium authentic scents — Tom Ford, Chanel, D&G &amp; more. US shipping only.
+        {/* Editorial statement band */}
+        <div className="border-b border-border">
+          <div className="container mx-auto px-6 py-14 md:py-20 text-center">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="h-px w-10 bg-primary/60" />
+              <span className="text-primary text-[9px] uppercase tracking-[0.35em] font-mono">Élite da Parfum</span>
+              <div className="h-px w-10 bg-primary/60" />
+            </div>
+            <p className="font-serif text-2xl sm:text-3xl md:text-4xl text-foreground leading-snug max-w-2xl mx-auto">
+              Scent is the most <em className="text-primary italic">intimate</em> thing you wear.
             </p>
           </div>
+        </div>
+
+        <div className="container mx-auto px-6 py-14 md:py-16 grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div className="flex flex-col items-center md:items-start space-y-5">
+            <BrandLogo showText className="h-10" textClassName="text-2xl" />
+            <p className="text-sm text-muted-foreground max-w-xs leading-[1.8] font-light text-center md:text-left">
+              Hattiesburg's luxury fragrance boutique. Premium authentic scents — Tom Ford, Chanel, D&G &amp; more. US shipping only.
+            </p>
+            <div className="flex items-center gap-5 pt-1">
+              <a href="https://www.instagram.com/elitedaparfum1" target="_blank" rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors duration-300" aria-label="Instagram">
+                <SiInstagram size={16} />
+              </a>
+              <a href="https://www.facebook.com/people/Elite-Da-Parfum/61589275449563/" target="_blank" rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors duration-300" aria-label="Facebook">
+                <SiFacebook size={16} />
+              </a>
+              <a href="https://wa.me/17866824792" target="_blank" rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors duration-300" aria-label="WhatsApp">
+                <SiWhatsapp size={16} />
+              </a>
+            </div>
+          </div>
           <div className="flex flex-col items-center md:items-start space-y-4">
-            <h4 className="text-xs uppercase tracking-[0.2em] text-foreground font-mono mb-2">Collections</h4>
+            <h4 className="text-[10px] uppercase tracking-[0.3em] text-primary font-mono mb-2">Collections</h4>
             {["Oud Collection", "Floral Collection", "Woody Collection", "Fresh Collection"].map(c => (
               <Link key={c} href="/shop">
-                <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer text-sm">{c}</span>
+                <span className="lux-underline text-muted-foreground hover:text-foreground transition-colors cursor-pointer text-sm font-light">{c}</span>
               </Link>
             ))}
           </div>
           <div className="flex flex-col items-center md:items-start space-y-4">
-            <h4 className="text-xs uppercase tracking-[0.2em] text-foreground font-mono mb-2">Contact</h4>
-            <a href="tel:+17866824792" className="text-muted-foreground hover:text-primary transition-colors text-sm">+1 (786) 682-4792</a>
-            <a href="mailto:contact@elitedaparfum.com" className="text-muted-foreground hover:text-primary transition-colors text-sm">contact@elitedaparfum.com</a>
-            <span className="text-muted-foreground text-sm">Hattiesburg, Mississippi</span>
-            <span className="text-muted-foreground text-sm">US Domestic Shipping Only</span>
-            <div className="flex items-center gap-4 pt-1">
-              <a href="https://www.instagram.com/elitedaparfum1" target="_blank" rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors" aria-label="Instagram">
-                <SiInstagram size={17} />
-              </a>
-              <a href="https://www.facebook.com/people/Elite-Da-Parfum/61589275449563/" target="_blank" rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors" aria-label="Facebook">
-                <SiFacebook size={17} />
-              </a>
-              <a href="https://wa.me/17866824792" target="_blank" rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors" aria-label="WhatsApp">
-                <SiWhatsapp size={17} />
-              </a>
-            </div>
+            <h4 className="text-[10px] uppercase tracking-[0.3em] text-primary font-mono mb-2">Atelier</h4>
+            <a href="tel:+17866824792" className="lux-underline text-muted-foreground hover:text-foreground transition-colors text-sm font-light">+1 (786) 682-4792</a>
+            <a href="mailto:contact@elitedaparfum.com" className="lux-underline text-muted-foreground hover:text-foreground transition-colors text-sm font-light">contact@elitedaparfum.com</a>
+            <span className="text-muted-foreground text-sm font-light">Hattiesburg, Mississippi</span>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 font-mono pt-1">US Domestic Shipping Only</span>
           </div>
         </div>
         <div className="border-t border-border">
-          <div className="container mx-auto px-6 py-5 flex flex-col md:flex-row justify-between items-center gap-3 text-xs text-muted-foreground font-mono">
-            <span>&copy; {new Date().getFullYear()} Elite Da Parfum. All rights reserved.</span>
-            <span className="text-primary/50 tracking-widest">A SYMPHONY OF SENSES</span>
+          <div className="container mx-auto px-6 py-5 flex flex-col md:flex-row justify-between items-center gap-3 text-[10px] text-muted-foreground font-mono uppercase tracking-[0.15em]">
+            <span>&copy; {new Date().getFullYear()} Élite da Parfum · All rights reserved</span>
+            <span className="text-primary/60 tracking-[0.3em]">A Symphony of Senses</span>
           </div>
         </div>
       </footer>
