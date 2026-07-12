@@ -58,25 +58,19 @@ export default function Shop() {
       </Helmet>
 
       {/* ── Page Header ── */}
-      <div className="relative pt-28 sm:pt-32 pb-16 sm:pb-20 px-6 overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <img src="/images/amber-mystique.png" alt="" className="w-full h-full object-cover" style={{ filter: "brightness(0.15) saturate(0.3)" }} />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/60 to-background" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto text-center">
-          <div className="flex items-center justify-center gap-3 sm:gap-4 mb-4">
-            <div className="h-px w-8 sm:w-12 bg-primary/50" />
-            <span className="text-primary text-[9px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.3em] font-mono">Hattiesburg, MS</span>
-            <div className="h-px w-8 sm:w-12 bg-primary/50" />
+      <div className="pt-36 sm:pt-44 pb-14 sm:pb-20 px-6 sm:px-10 lg:px-16">
+        <div className="max-w-[1500px] mx-auto">
+          <div className="flex items-center gap-4 mb-7">
+            <div className="h-px w-10 bg-primary/70" />
+            <span className="text-primary text-[10px] uppercase tracking-[0.35em] font-mono">The Collection — Hattiesburg, MS</span>
           </div>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif text-foreground mb-3 sm:mb-4">The <em className="text-primary italic">Collection</em></h1>
-          <p className="text-muted-foreground max-w-xl mx-auto font-serif italic text-base sm:text-lg">
-            Premium fragrances — 100% authentic. US domestic shipping only.
-          </p>
+          <h1 className="font-serif text-[clamp(2.75rem,7vw,6.5rem)] text-foreground leading-[1.02] tracking-[-0.015em]">
+            Every bottle,<br /><em className="text-primary italic">chosen</em>.
+          </h1>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-24">
+      <div className="max-w-[1500px] mx-auto px-4 sm:px-10 lg:px-16 pb-24">
 
         {/* ── Search Bar ── */}
         <div className="relative mb-6 mt-2">
@@ -266,7 +260,7 @@ export default function Shop() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-6 sm:gap-y-12">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-12 sm:gap-x-10 sm:gap-y-16 lg:gap-x-12 lg:gap-y-20">
             <AnimatePresence mode="popLayout">
               {filteredProducts.map((product) => {
                 const justAdded = recentlyAdded === product.id;
@@ -284,10 +278,6 @@ export default function Shop() {
                               <ShoppingBag size={40} className="text-border" />
                             </div>
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 z-20">
-                            <span className="bg-background/80 backdrop-blur-sm text-foreground text-[8px] sm:text-[9px] uppercase tracking-[0.1em] sm:tracking-[0.15em] px-1.5 sm:px-2 py-1 font-mono">{product.family}</span>
-                          </div>
                           {/* Quick add — tap on mobile, hover on desktop */}
                           <div className="absolute bottom-0 left-0 right-0 sm:translate-y-full sm:group-hover:translate-y-0 sm:transition-transform sm:duration-300 z-20">
                             <button onClick={(e) => handleQuickAdd(e, product)}
@@ -304,22 +294,19 @@ export default function Shop() {
                             </button>
                           </div>
                         </div>
-                        <div className="flex items-start justify-between gap-1 px-0.5">
+                        <div className="flex items-baseline justify-between gap-3 pt-1">
                           <div className="min-w-0">
-                            <h3 className="text-sm sm:text-base font-serif text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-2">{product.name}</h3>
-                            <span className="text-muted-foreground text-[9px] sm:text-[10px] uppercase tracking-widest font-mono">{product.gender}</span>
+                            <h3 className="text-sm sm:text-base font-serif text-foreground group-hover:text-primary transition-colors duration-300 leading-snug line-clamp-2">{product.name}</h3>
+                            <span className="text-muted-foreground text-[9px] sm:text-[10px] uppercase tracking-[0.25em] font-mono block mt-1">{product.family} · {product.gender}</span>
                           </div>
-                          <div className="flex flex-col items-end shrink-0 mt-0.5">
-                            <span className="text-[8px] sm:text-[9px] uppercase text-muted-foreground font-mono">From</span>
+                          <div className="shrink-0 text-right">
                             {(product.discountPercent ?? 0) > 0 ? (
-                              <div className="flex items-baseline gap-1.5">
-                                <span className="text-primary font-mono text-xs sm:text-sm leading-tight">
-                                  ${Math.round(product.price * (1 - (product.discountPercent ?? 0) / 100))}
-                                </span>
-                                <span className="text-muted-foreground line-through font-mono text-[10px] leading-tight">${product.price}</span>
-                              </div>
+                              <span className="font-mono text-xs sm:text-sm">
+                                <span className="text-muted-foreground line-through mr-1.5 text-[10px]">${product.price}</span>
+                                <span className="text-primary">${Math.round(product.price * (1 - (product.discountPercent ?? 0) / 100))}</span>
+                              </span>
                             ) : (
-                              <span className="text-primary font-mono text-xs sm:text-sm leading-tight">${product.price}</span>
+                              <span className="text-foreground font-mono text-xs sm:text-sm">${product.price}</span>
                             )}
                           </div>
                         </div>

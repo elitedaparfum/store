@@ -1,23 +1,76 @@
 import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { Helmet } from "react-helmet-async";
-import { ArrowRight, Shield, MapPin, Truck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
-import { BrandTicker } from "@/components/brand-ticker";
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 32 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.9, ease: "easeOut" as const } },
+  hidden: { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0, transition: { duration: 1, ease: "easeOut" as const } },
 };
 
 const stagger = {
-  visible: { transition: { staggerChildren: 0.15 } },
+  visible: { transition: { staggerChildren: 0.14 } },
 };
+
+function Eyebrow({ children, center = false }: { children: React.ReactNode; center?: boolean }) {
+  return (
+    <div className={`flex items-center gap-4 ${center ? "justify-center" : ""}`}>
+      <div className="h-px w-10 bg-primary/70" />
+      <span className="text-primary text-[10px] uppercase tracking-[0.35em] font-mono">{children}</span>
+      {center && <div className="h-px w-10 bg-primary/70" />}
+    </div>
+  );
+}
+
+function ProductCard({ product, large = false }: { product: ReturnType<typeof useProducts>["products"][0]; large?: boolean }) {
+  const discount = product.discountPercent ?? 0;
+  const salePrice = discount > 0 ? Math.round(product.price * (1 - discount / 100)) : null;
+  return (
+    <Link href={`/product/${product.id}`}>
+      <div className="group cursor-pointer">
+        <div className={`lux-frame relative overflow-hidden bg-card ${large ? "aspect-[4/5]" : "aspect-[4/5]"}`}>
+          {product.imageUrl ? (
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              loading="lazy"
+              className="w-full h-full object-cover object-center transition-transform duration-[1.2s] ease-out group-hover:scale-[1.04]"
+            />
+          ) : (
+            <div className="w-full h-full bg-card" />
+          )}
+        </div>
+        <div className={`${large ? "pt-6" : "pt-5"} flex items-baseline justify-between gap-6`}>
+          <div className="min-w-0">
+            <h3 className={`font-serif text-foreground leading-snug transition-colors duration-300 group-hover:text-primary ${large ? "text-xl sm:text-2xl" : "text-base sm:text-lg"}`}>
+              {product.name}
+            </h3>
+            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-mono mt-1.5">
+              {product.family} · {product.gender}
+            </p>
+          </div>
+          <div className="shrink-0 text-right">
+            {salePrice !== null ? (
+              <span className="font-mono text-sm">
+                <span className="text-muted-foreground line-through mr-2 text-xs">${product.price}</span>
+                <span className="text-primary">${salePrice}</span>
+              </span>
+            ) : (
+              <span className="font-mono text-sm text-foreground">${product.price}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default function Home() {
   const { products } = useProducts();
-  const featured = products.filter(p => p.featured && p.inStock).slice(0, 3);
-  const displayProducts = featured.length >= 3 ? featured : products.filter(p => p.inStock).slice(0, 3);
+  const featured = products.filter(p => p.featured && p.inStock);
+  const pool = featured.length >= 3 ? featured : products.filter(p => p.inStock);
+  const displayProducts = pool.slice(0, 3);
 
   return (
     <div className="w-full overflow-x-hidden">
@@ -27,8 +80,7 @@ export default function Home() {
       </Helmet>
 
       {/* ── HERO ── */}
-      <section className="relative h-[92vh] min-h-[600px] w-full overflow-hidden flex items-end lg:items-center">
-        {/* Video background */}
+      <section className="relative h-screen min-h-[640px] w-full overflow-hidden flex items-end">
         <div className="absolute inset-0 z-0">
           <video
             src="/hero-video.mp4"
@@ -38,239 +90,171 @@ export default function Home() {
             playsInline
             className="w-full h-full object-cover object-center"
           />
-          {/* Theme-aware ivory/charcoal scrim — stronger on left (desktop) / bottom (mobile) */}
-          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background lg:bg-gradient-to-r lg:from-background/90 lg:via-background/50 lg:to-background/10" />
-          {/* Inset hairline plaque frame */}
-          <div className="absolute inset-4 sm:inset-6 border border-foreground/10 pointer-events-none hidden sm:block" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
         </div>
 
-        {/* Content — left-aligned & centered on desktop, bottom on mobile */}
-        <div className="relative z-10 w-full pb-16 lg:pb-0">
-          <div className="px-6 sm:px-10 lg:px-14 max-w-[560px]">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.7, delay: 0.1 }}
-              className="flex items-center gap-3.5 mb-7"
-            >
-              <div className="h-px w-7 bg-primary" />
-              <span className="text-primary text-[10px] uppercase tracking-[0.3em] font-sans">Élite da Parfum · Est. Hattiesburg</span>
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="font-serif font-normal text-foreground text-[40px] sm:text-[52px] lg:text-[68px] leading-[1.08] tracking-[-0.01em] mb-6"
-            >
-              The art of<br />
-              <em className="text-primary italic">quiet</em> luxury.
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.7, delay: 0.35 }}
-              className="text-muted-foreground text-sm sm:text-[15px] leading-[1.8] font-light mb-8 max-w-[400px]"
-            >
-              Hand-curated fragrance from Chanel, Dior, and niche ateliers — delivered with care across the US.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.45 }}
-            >
-              <Link href="/shop">
-                <span className="group inline-flex items-center gap-2 text-foreground border-b border-foreground pb-1.5 uppercase tracking-[0.2em] text-[11px] hover:text-primary hover:border-primary transition-colors duration-300 cursor-pointer" data-testid="link-hero-shop">
-                  Shop the Edit
-                  <ArrowRight size={13} className="transition-transform duration-300 group-hover:translate-x-1" />
-                </span>
-              </Link>
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 hidden lg:flex flex-col items-center">
-          <div className="w-px h-12 bg-gradient-to-b from-transparent to-primary/60 animate-pulse" />
-        </div>
-      </section>
-
-      {/* ── FLOATING BRAND TICKER ── */}
-      <BrandTicker />
-
-      {/* ── ABOUT ── */}
-      <section className="py-20 sm:py-28 md:py-36 px-6 bg-background">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+        <div className="relative z-10 w-full px-6 sm:px-10 lg:px-16 pb-20 sm:pb-24 lg:pb-28">
           <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={stagger}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.9, delay: 0.2 }}
+            className="mb-8"
           >
-            <motion.div variants={fadeUp} className="flex items-center gap-3 mb-5">
-              <div className="h-px w-10 bg-primary" />
-              <span className="text-primary text-[10px] uppercase tracking-[0.3em] font-mono">About Us</span>
-            </motion.div>
-            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif text-foreground mb-6 leading-tight">
-              Hattiesburg's<br />Luxury <em className="text-primary italic">Fragrance</em> Boutique
-            </motion.h2>
-            <motion.p variants={fadeUp} className="text-muted-foreground text-base sm:text-lg leading-relaxed font-serif italic mb-5">
-              Based in Hattiesburg, MS, we curate the world's most sought-after luxury fragrances — 100% authentic, hand-selected from the premier houses of perfumery.
-            </motion.p>
-            <motion.p variants={fadeUp} className="text-muted-foreground leading-relaxed mb-8 text-sm sm:text-base">
-              From Tom Ford's Oud Wood to Chanel's iconic Coco Noir, every bottle we carry is genuine. We do not create custom scents — we source the best the world has to offer.
-            </motion.p>
-            <motion.div variants={fadeUp}>
-              <Link href="/shop">
-                <span className="inline-flex items-center gap-2 text-foreground border-b border-primary pb-1 uppercase tracking-widest text-xs hover:text-primary transition-colors cursor-pointer">
-                  Browse Current Stock <ArrowRight size={12} />
-                </span>
-              </Link>
-            </motion.div>
+            <Eyebrow>Élite da Parfum — Hattiesburg, MS</Eyebrow>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.9 }}
-            className="relative"
+          <motion.h1
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.1, delay: 0.35, ease: "easeOut" }}
+            className="font-serif font-normal text-foreground text-[clamp(3rem,9.5vw,8.5rem)] leading-[0.98] tracking-[-0.02em] max-w-[14ch]"
           >
-            <div className="aspect-[4/5] overflow-hidden bg-card">
-              <img src="/images/about-perfumes.jpg" alt="Elite Da Parfum boutique" className="w-full h-full object-cover" />
-            </div>
-            <div className="absolute -bottom-4 -left-4 lg:-bottom-6 lg:-left-6 w-24 h-24 lg:w-32 lg:h-32 bg-primary/10 border border-primary/20 hidden sm:block" />
-            <div className="absolute -top-4 -right-4 lg:-top-6 lg:-right-6 w-16 h-16 lg:w-20 lg:h-20 bg-card border border-border hidden sm:block" />
-            <div className="absolute bottom-6 right-6 bg-background/90 backdrop-blur-sm border border-border p-3 sm:p-4">
-              <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground font-mono mb-1">Located in</p>
-              <p className="text-base sm:text-lg font-serif text-foreground">Hattiesburg, MS</p>
-            </div>
+            The art of <em className="text-primary italic">quiet</em> luxury.
+          </motion.h1>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.9, delay: 0.7 }}
+            className="mt-10 sm:mt-12 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8"
+          >
+            <p className="text-muted-foreground text-sm sm:text-[15px] leading-[1.9] font-light max-w-[380px]">
+              Authentic fragrance from the great houses and the quiet ateliers,
+              hand-selected and delivered across the United States.
+            </p>
+            <Link href="/shop">
+              <span className="lux-underline group inline-flex items-center gap-3 text-foreground uppercase tracking-[0.3em] text-[11px] cursor-pointer whitespace-nowrap" data-testid="link-hero-shop">
+                Enter the Collection
+                <ArrowRight size={13} className="transition-transform duration-300 group-hover:translate-x-1.5 text-primary" />
+              </span>
+            </Link>
           </motion.div>
         </div>
       </section>
 
-      {/* ── BRANDS STRIP ── */}
-      <section className="py-12 sm:py-14 bg-card border-y border-border">
-        <div className="max-w-7xl mx-auto px-6">
-          <p className="text-center text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-mono mb-6 sm:mb-8">Brands We Carry</p>
-          <div className="flex overflow-x-auto gap-8 md:gap-12 lg:gap-16 pb-2 sm:pb-0 sm:flex-wrap sm:justify-center no-scrollbar">
-            {["Tom Ford", "Chanel", "Dior", "Versace", "YSL", "Armani", "Creed", "Dolce & Gabbana", "Afnan", "Lattafa", "Armaf", "Rasasi", "Azzaro", "Valentino", "Prada", "Hermès"].map((brand, i) => (
-              <motion.span
-                key={brand}
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06 }}
-                className="text-muted-foreground/60 font-serif text-base sm:text-lg hover:text-primary transition-colors cursor-default whitespace-nowrap shrink-0"
-              >
-                {brand}
-              </motion.span>
-            ))}
-          </div>
-        </div>
+      {/* ── MANIFESTO ── */}
+      <section className="bg-popover py-24 sm:py-32 lg:py-40 px-6">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={stagger}
+          className="max-w-3xl mx-auto text-center"
+        >
+          <motion.div variants={fadeUp} className="mb-10">
+            <Eyebrow center>No. 01 — Our Conviction</Eyebrow>
+          </motion.div>
+          <motion.p variants={fadeUp} className="font-serif text-2xl sm:text-3xl lg:text-[42px] text-foreground leading-[1.35]">
+            We do not compose scents. We <em className="text-primary italic">find</em> them —
+            in the archives of the great houses, among the shelves of ateliers
+            most will never visit — and bring them home to you. Every bottle authentic.
+            Every bottle chosen.
+          </motion.p>
+        </motion.div>
       </section>
 
-      {/* ── FEATURED COLLECTION ── */}
+      {/* ── FEATURED — asymmetric editorial grid ── */}
       {displayProducts.length > 0 && (
-        <section className="py-20 sm:py-28 px-6 bg-background">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 sm:mb-16 gap-4">
-              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-                <motion.div variants={fadeUp} className="flex items-center gap-3 mb-4">
-                  <div className="h-px w-10 bg-primary" />
-                  <span className="text-primary text-[10px] uppercase tracking-[0.3em] font-mono">Now Available</span>
-                </motion.div>
-                <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl md:text-5xl font-serif text-foreground">
-                  Current <em className="text-primary italic">Stock</em>
-                </motion.h2>
+        <section className="bg-background py-24 sm:py-32 lg:py-40 px-6 sm:px-10 lg:px-16">
+          <div className="max-w-[1500px] mx-auto">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-80px" }}
+              variants={stagger}
+              className="mb-14 sm:mb-20"
+            >
+              <motion.div variants={fadeUp} className="mb-7">
+                <Eyebrow>No. 02 — In Residence</Eyebrow>
               </motion.div>
-              <Link href="/shop">
-                <span className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors cursor-pointer text-xs uppercase tracking-widest border-b border-transparent hover:border-primary pb-1" data-testid="link-view-all">
-                  View All <ArrowRight size={12} />
-                </span>
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 lg:gap-12">
-              {displayProducts.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.7, delay: index * 0.15 }}
-                  className="group"
-                >
-                  <Link href={`/product/${product.id}`}>
-                    <div className="cursor-pointer">
-                      <div className="lux-frame relative aspect-[3/4] overflow-hidden mb-4 bg-card border border-border/60">
-                        {product.imageUrl ? (
-                          <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.06]" />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-card to-background" />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                        <div className="absolute top-4 left-4 z-20">
-                          <span className="bg-background/80 backdrop-blur-sm text-foreground text-[9px] uppercase tracking-widest px-2 py-1 font-mono">{product.family}</span>
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 translate-y-full group-hover:translate-y-0 transition-transform duration-400 z-20">
-                          <span className="inline-flex items-center gap-2 text-white text-xs uppercase tracking-widest">
-                            View Details <ArrowRight size={12} />
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-start justify-between gap-1 px-0.5">
-                        <div className="min-w-0">
-                          <h3 className="text-base sm:text-lg font-serif text-foreground group-hover:text-primary transition-colors mb-0.5 leading-snug line-clamp-2">{product.name}</h3>
-                          <p className="text-xs uppercase tracking-widest text-muted-foreground font-mono">{product.gender}</p>
-                        </div>
-                        <div className="flex flex-col items-end shrink-0 mt-0.5">
-                          <span className="text-[8px] sm:text-[9px] uppercase text-muted-foreground font-mono">From</span>
-                          {(product.discountPercent ?? 0) > 0 ? (
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-primary font-mono text-xs sm:text-sm leading-tight">
-                                ${Math.round(product.price * (1 - (product.discountPercent ?? 0) / 100))}
-                              </span>
-                              <span className="text-muted-foreground line-through font-mono text-[10px] leading-tight">${product.price}</span>
-                            </div>
-                          ) : (
-                            <span className="text-primary font-mono text-xs sm:text-sm leading-tight">${product.price}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+              <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+                <motion.h2 variants={fadeUp} className="font-serif text-4xl sm:text-5xl lg:text-7xl text-foreground leading-[1.05] tracking-[-0.01em]">
+                  The current<br /><em className="text-primary italic">selection</em>.
+                </motion.h2>
+                <motion.div variants={fadeUp}>
+                  <Link href="/shop">
+                    <span className="lux-underline inline-flex items-center gap-3 text-muted-foreground hover:text-foreground uppercase tracking-[0.3em] text-[10px] cursor-pointer transition-colors" data-testid="link-view-all">
+                      View Everything <ArrowRight size={12} className="text-primary" />
+                    </span>
                   </Link>
                 </motion.div>
-              ))}
+              </div>
+            </motion.div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-10 gap-y-16 lg:gap-y-0">
+              {displayProducts[0] && (
+                <motion.div
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-80px" }}
+                  transition={{ duration: 0.9 }}
+                  className="lg:col-span-7"
+                >
+                  <ProductCard product={displayProducts[0]} large />
+                </motion.div>
+              )}
+              <div className="lg:col-span-4 lg:col-start-9 flex flex-col gap-16 lg:justify-center">
+                {displayProducts.slice(1, 3).map((product, i) => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-60px" }}
+                    transition={{ duration: 0.9, delay: 0.15 + i * 0.15 }}
+                  >
+                    <ProductCard product={product} />
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
       )}
 
-      {/* ── LUXURY BANNER ── */}
-      <section className="relative py-24 sm:py-32 overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <img src="/images/scent-guide-bg.jpeg" alt="" className="w-full h-full object-cover" style={{ filter: "brightness(0.35) saturate(0.7)" }} />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/20" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="max-w-xl">
-            <motion.div variants={fadeUp} className="flex items-center gap-3 mb-5">
-              <div className="h-px w-10 bg-primary" />
-              <span className="text-primary text-[10px] uppercase tracking-[0.3em] font-mono">Personal Service</span>
+      {/* ── MAISON ── */}
+      <section className="bg-card border-y border-border py-24 sm:py-32 lg:py-40 px-6 sm:px-10 lg:px-16">
+        <div className="max-w-[1500px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-0 items-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 1.1 }}
+            className="lg:col-span-5"
+          >
+            <div className="aspect-[4/5] overflow-hidden bg-background">
+              <img src="/images/about-perfumes.jpg" alt="Inside the Élite da Parfum boutique" className="w-full h-full object-cover" />
+            </div>
+            <p className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground font-mono mt-4">
+              The boutique — Hattiesburg, Mississippi
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+            className="lg:col-span-5 lg:col-start-8"
+          >
+            <motion.div variants={fadeUp} className="mb-7">
+              <Eyebrow>No. 03 — The Maison</Eyebrow>
             </motion.div>
-            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl md:text-5xl font-serif text-white mb-5 leading-tight">
-              Not Sure Which<br />Scent is Right for You?
+            <motion.h2 variants={fadeUp} className="font-serif text-3xl sm:text-4xl lg:text-5xl text-foreground leading-[1.15] mb-8">
+              A boutique built on<br />a single <em className="text-primary italic">standard</em>.
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-white/60 leading-relaxed mb-8 font-serif italic text-sm sm:text-base">
-              Message us on WhatsApp and our team will personally guide you to the perfect fragrance based on your taste and occasion.
+            <motion.p variants={fadeUp} className="text-muted-foreground text-sm sm:text-[15px] leading-[1.95] font-light mb-5 max-w-[420px]">
+              Every fragrance in this house is genuine — sourced from authorized
+              distributors, verified before it reaches the shelf. Tom Ford, Chanel,
+              Creed, and the niche names collectors ask for by heart.
+            </motion.p>
+            <motion.p variants={fadeUp} className="text-muted-foreground text-sm sm:text-[15px] leading-[1.95] font-light mb-10 max-w-[420px]">
+              Visit us in Hattiesburg to try before you buy, or order from anywhere
+              in the United States — insured, discreet, and never an imitation.
             </motion.p>
             <motion.div variants={fadeUp}>
               <Link href="/contact">
-                <span className="inline-flex items-center gap-3 bg-primary text-primary-foreground px-7 sm:px-8 py-4 uppercase tracking-[0.2em] text-xs font-semibold hover:bg-primary/90 transition-colors cursor-pointer">
-                  Get Recommendations <ArrowRight size={13} />
+                <span className="lux-underline inline-flex items-center gap-3 text-foreground uppercase tracking-[0.3em] text-[10px] cursor-pointer">
+                  Visit the Boutique <ArrowRight size={12} className="text-primary" />
                 </span>
               </Link>
             </motion.div>
@@ -278,76 +262,93 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── SERVICES ── */}
-      <section className="py-20 sm:py-28 px-6 bg-card">
-        <div className="max-w-7xl mx-auto">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-12 sm:mb-16">
-            <motion.div variants={fadeUp} className="flex items-center justify-center gap-3 mb-4">
-              <div className="h-px w-10 bg-primary" />
-              <span className="text-primary text-[10px] uppercase tracking-[0.3em] font-mono">How We Operate</span>
-              <div className="h-px w-10 bg-primary" />
+      {/* ── THE PROMISE — numbered manifesto ── */}
+      <section className="bg-background py-24 sm:py-32 lg:py-40 px-6 sm:px-10 lg:px-16">
+        <div className="max-w-[1100px] mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+            className="mb-16 sm:mb-20"
+          >
+            <motion.div variants={fadeUp} className="mb-7">
+              <Eyebrow>No. 04 — The Promise</Eyebrow>
             </motion.div>
-            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-serif text-foreground">Our <em className="text-primary italic">Promise</em></motion.h2>
+            <motion.h2 variants={fadeUp} className="font-serif text-4xl sm:text-5xl lg:text-6xl text-foreground leading-[1.05]">
+              What we <em className="text-primary italic">stand</em> behind.
+            </motion.h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
+          <div>
             {[
               {
-                icon: Shield,
-                title: "100% Authentic",
-                body: "Every fragrance we sell is genuine — sourced directly from authorized distributors. No fakes, no replicas.",
+                n: "01",
+                title: "Authenticity, absolute",
+                body: "Sourced only from authorized distributors and verified in-house. We have never sold an imitation, and we never will.",
               },
               {
-                icon: Truck,
-                title: "US Shipping Only",
-                body: "We ship domestically across all 50 US states. Fast, insured, and discreet packaging on every order.",
+                n: "02",
+                title: "Curation over catalogue",
+                body: "A small, deliberate selection — chosen bottle by bottle, not imported by the pallet. If it is on our shelf, it earned the place.",
               },
               {
-                icon: MapPin,
-                title: "Hattiesburg, MS",
-                body: "Visit us in person for a hands-on experience. Try before you buy at our boutique in Hattiesburg, Mississippi.",
+                n: "03",
+                title: "Counsel, in person or in hand",
+                body: "Try before you buy at the boutique in Hattiesburg, or write to us — we will guide you to the scent, not the sale.",
               },
             ].map((item, i) => (
               <motion.div
-                key={item.title}
+                key={item.n}
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15, duration: 0.7 }}
-                className="text-center p-7 sm:p-8 border border-border hover:border-primary/40 transition-colors group"
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.8, delay: i * 0.12 }}
+                className="grid grid-cols-[auto_1fr] sm:grid-cols-[120px_1fr_1.2fr] gap-x-8 sm:gap-x-12 gap-y-3 py-10 sm:py-12 border-t border-border last:border-b group"
               >
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-5 group-hover:bg-primary/20 transition-colors">
-                  <item.icon size={20} className="text-primary" />
-                </div>
-                <h3 className="text-lg font-serif text-foreground mb-3">{item.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{item.body}</p>
+                <span className="font-mono text-primary text-xs tracking-[0.3em] pt-2">{item.n}</span>
+                <h3 className="font-serif text-2xl sm:text-3xl text-foreground leading-snug transition-colors duration-300 group-hover:text-primary">
+                  {item.title}
+                </h3>
+                <p className="col-span-2 sm:col-span-1 text-muted-foreground text-sm leading-[1.9] font-light sm:pt-2 max-w-[440px]">
+                  {item.body}
+                </p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── FINAL CTA ── */}
-      <section className="py-24 sm:py-32 px-6 bg-background text-center relative overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
-          <span className="text-[clamp(8rem,40vw,20rem)] font-serif text-foreground">E</span>
+      {/* ── HOUSES — quiet single line ── */}
+      <section className="bg-popover border-y border-border py-16 sm:py-20 px-6">
+        <div className="max-w-5xl mx-auto text-center">
+          <p className="text-[9px] uppercase tracking-[0.35em] text-muted-foreground font-mono mb-8">Among the houses we carry</p>
+          <p className="font-serif text-lg sm:text-xl lg:text-2xl text-muted-foreground leading-[2] max-w-4xl mx-auto">
+            Tom Ford <span className="text-primary/50 mx-1">·</span> Chanel <span className="text-primary/50 mx-1">·</span> Creed <span className="text-primary/50 mx-1">·</span> Dior <span className="text-primary/50 mx-1">·</span> Hermès <span className="text-primary/50 mx-1">·</span> Valentino <span className="text-primary/50 mx-1">·</span> Prada <span className="text-primary/50 mx-1">·</span> Armani <span className="text-primary/50 mx-1">·</span> Rasasi <span className="text-primary/50 mx-1">·</span> Lattafa <span className="text-primary/50 mx-1">·</span> Afnan
+          </p>
         </div>
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="max-w-2xl mx-auto relative z-10">
-          <motion.div variants={fadeUp} className="flex items-center justify-center gap-3 mb-5">
-            <div className="h-px w-10 bg-primary" />
-            <span className="text-primary text-[10px] uppercase tracking-[0.3em] font-mono">Hattiesburg, MS</span>
-            <div className="h-px w-10 bg-primary" />
+      </section>
+
+      {/* ── CLOSING ── */}
+      <section className="bg-background py-28 sm:py-36 lg:py-44 px-6 text-center">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={stagger}
+          className="max-w-3xl mx-auto"
+        >
+          <motion.div variants={fadeUp} className="mb-10">
+            <Eyebrow center>Élite da Parfum</Eyebrow>
           </motion.div>
-          <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl md:text-6xl font-serif text-foreground mb-5 leading-tight">
-            Scent is Memory.<br /><span className="text-primary italic">Make it Yours.</span>
+          <motion.h2 variants={fadeUp} className="font-serif text-4xl sm:text-6xl lg:text-7xl text-foreground leading-[1.05] mb-12">
+            Scent is memory.<br />
+            <em className="text-primary italic">Make it yours.</em>
           </motion.h2>
-          <motion.p variants={fadeUp} className="text-muted-foreground mb-10 leading-relaxed font-serif italic text-sm sm:text-base">
-            Premium fragrances from the world's finest houses. Available in-store and shipped across the US.
-          </motion.p>
           <motion.div variants={fadeUp}>
             <Link href="/shop">
-              <span className="inline-flex items-center gap-3 bg-foreground text-background px-10 sm:px-12 py-4 sm:py-5 uppercase tracking-[0.2em] text-xs font-semibold hover:bg-primary hover:text-primary-foreground transition-all duration-400 cursor-pointer" data-testid="link-home-contact">
-                Shop the Collection <ArrowRight size={14} />
+              <span className="inline-flex items-center gap-4 border border-primary text-primary px-12 sm:px-16 py-5 uppercase tracking-[0.3em] text-[11px] hover:bg-primary hover:text-primary-foreground transition-colors duration-400 cursor-pointer" data-testid="link-home-contact">
+                Shop the Collection <ArrowRight size={13} />
               </span>
             </Link>
           </motion.div>

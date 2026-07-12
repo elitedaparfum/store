@@ -278,9 +278,9 @@ export default function ProductDetail() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full bg-[#25D366] text-white py-4 flex items-center justify-center gap-3 hover:bg-[#1ebe5e] transition-colors uppercase tracking-[0.15em] text-[11px] font-semibold font-mono"
+                className="w-full border border-primary text-primary py-4 flex items-center justify-center gap-3 hover:bg-primary hover:text-primary-foreground transition-colors duration-300 uppercase tracking-[0.15em] text-[11px] font-semibold font-mono"
               >
-                <SiWhatsapp size={17} />
+                <SiWhatsapp size={16} />
                 Order via WhatsApp
               </a>
             </div>
