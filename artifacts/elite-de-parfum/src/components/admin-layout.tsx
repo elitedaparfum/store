@@ -2,13 +2,15 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/context/auth";
 import { useTheme } from "./theme-provider";
 import { BrandLogo } from "./brand-logo";
-import { LayoutDashboard, Package, Sun, Moon, LogOut, Home, Menu, X } from "lucide-react";
+import { LayoutDashboard, Package, Ticket, BadgePercent, Sun, Moon, LogOut, Home, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/products", label: "Products", icon: Package },
+  { href: "/admin/discounts", label: "Discounts", icon: Ticket },
+  { href: "/admin/sales", label: "Sales", icon: BadgePercent },
 ];
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {

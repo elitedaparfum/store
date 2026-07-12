@@ -22,6 +22,8 @@ import ResetPassword from "@/pages/reset-password";
 import AdminDashboard from "@/pages/admin/index";
 import AdminProducts from "@/pages/admin/products";
 import ProductForm from "@/pages/admin/product-form";
+import AdminDiscounts from "@/pages/admin/discounts";
+import AdminSales from "@/pages/admin/sales";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -62,6 +64,8 @@ function AdminRoutes() {
           <Route path="/admin/products/new" component={ProductForm} />
           <Route path="/admin/products/:id/edit" component={ProductForm} />
           <Route path="/admin/products" component={AdminProducts} />
+          <Route path="/admin/discounts" component={AdminDiscounts} />
+          <Route path="/admin/sales" component={AdminSales} />
           <Route path="/admin" component={AdminDashboard} />
         </Switch>
       </AdminLayout>
@@ -91,6 +95,12 @@ function AppRoutes() {
         <AdminRoutes />
       </Route>
       <Route path="/admin/products">
+        <AdminRoutes />
+      </Route>
+      <Route path="/admin/discounts">
+        <AdminRoutes />
+      </Route>
+      <Route path="/admin/sales">
         <AdminRoutes />
       </Route>
       <Route path="/admin">

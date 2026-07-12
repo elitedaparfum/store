@@ -1,21 +1,53 @@
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/auth";
 import { useProducts } from "@/hooks/use-products";
-import { Package, Plus, TrendingUp, Users, ArrowRight } from "lucide-react";
+import { apiFetch } from "@/lib/api";
+import { Package, Plus, TrendingUp, Ticket, BadgePercent, ArrowRight } from "lucide-react";
+import { codeStatus, type DiscountCode } from "./discounts";
+import { saleStatus, type Sale } from "./sales";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
   const { products } = useProducts();
+  const [codes, setCodes] = useState<DiscountCode[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
+
+  useEffect(() => {
+    apiFetch("/api/discounts").then(d => setCodes(d.codes ?? [])).catch(() => {});
+    apiFetch("/api/sales").then(d => setSales(d.sales ?? [])).catch(() => {});
+  }, []);
 
   const totalValue = products.reduce((s, p) => s + p.price, 0);
-  const families = [...new Set(products.map(p => p.family))];
+  const liveCodes = codes.filter(c => codeStatus(c) === "live");
+  const liveSales = sales.filter(s => saleStatus(s) === "live");
+  const totalRedemptions = codes.reduce((s, c) => s + c.usedCount, 0);
 
   const stats = [
-    { label: "Total Products", value: products.length, icon: Package, color: "text-primary" },
-    { label: "Scent Families", value: families.length, icon: TrendingUp, color: "text-primary" },
-    { label: "Avg. Price", value: products.length ? `$${Math.round(totalValue / products.length)}` : "$0", icon: TrendingUp, color: "text-primary" },
-    { label: "Admin Account", value: user?.email?.split("@")[0] ?? "–", icon: Users, color: "text-primary" },
+    { label: "Total Products", value: products.length, icon: Package },
+    { label: "Avg. Price", value: products.length ? `$${Math.round(totalValue / products.length)}` : "$0", icon: TrendingUp },
+    { label: "Live Codes", value: `${liveCodes.length}${totalRedemptions ? ` · ${totalRedemptions} used` : ""}`, icon: Ticket },
+    { label: "Live Sales", value: liveSales.length, icon: BadgePercent },
+  ];
+
+  const quickActions = [
+    {
+      href: "/admin/products/new", icon: Plus, testid: "link-quick-add-product",
+      title: "Add New Product", sub: "Upload a new fragrance to your store",
+    },
+    {
+      href: "/admin/discounts", icon: Ticket, testid: "link-quick-discounts",
+      title: "Discount Codes", sub: "Create promo codes for your customers",
+    },
+    {
+      href: "/admin/sales", icon: BadgePercent, testid: "link-quick-sales",
+      title: "Sales Campaigns", sub: "Run storewide or targeted sales",
+    },
+    {
+      href: "/", icon: ArrowRight, testid: "link-view-store",
+      title: "View Storefront", sub: "See your store as customers see it",
+    },
   ];
 
   return (
@@ -24,6 +56,21 @@ export default function AdminDashboard() {
         <h1 className="text-3xl font-serif text-foreground mb-1">Dashboard</h1>
         <p className="text-muted-foreground text-sm">Welcome back, {user?.email}</p>
       </div>
+
+      {liveSales.length > 0 && (
+        <div className="border border-primary/30 bg-primary/5 px-5 py-4 flex items-center gap-4">
+          <BadgePercent size={18} className="text-primary shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-foreground">
+              {liveSales.map(s => `${s.name} (−${s.percent}%)`).join(" · ")}
+            </p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-mono mt-0.5">Running now</p>
+          </div>
+          <Link href="/admin/sales">
+            <span className="text-xs uppercase tracking-widest text-primary hover:underline cursor-pointer shrink-0">Manage</span>
+          </Link>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
@@ -36,7 +83,7 @@ export default function AdminDashboard() {
           >
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs uppercase tracking-widest text-muted-foreground font-mono">{stat.label}</span>
-              <stat.icon size={16} className={stat.color} />
+              <stat.icon size={16} className="text-primary" />
             </div>
             <p className="text-2xl font-serif text-foreground">{stat.value}</p>
           </motion.div>
@@ -78,6 +125,11 @@ export default function AdminDashboard() {
                     <p className="font-serif text-foreground text-sm truncate">{product.name}</p>
                     <p className="text-xs text-muted-foreground">{product.family} • {product.gender}</p>
                   </div>
+                  {(product.discountPercent ?? 0) > 0 && (
+                    <span className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 font-mono border text-primary border-primary/30 bg-primary/10 shrink-0">
+                      −{product.discountPercent}%
+                    </span>
+                  )}
                   <span className="font-mono text-sm text-foreground shrink-0">${product.price}</span>
                 </div>
               ))}
@@ -88,42 +140,20 @@ export default function AdminDashboard() {
         <div className="bg-card border border-border p-6">
           <h2 className="text-lg font-serif text-foreground mb-6">Quick Actions</h2>
           <div className="space-y-3">
-            <Link href="/admin/products/new">
-              <div className="flex items-center gap-4 p-4 border border-border hover:border-primary transition-colors cursor-pointer group" data-testid="link-quick-add-product">
-                <div className="w-8 h-8 bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <Plus size={16} className="text-primary" />
+            {quickActions.map(action => (
+              <Link key={action.href} href={action.href}>
+                <div className="flex items-center gap-4 p-4 border border-border hover:border-primary transition-colors cursor-pointer group" data-testid={action.testid}>
+                  <div className="w-8 h-8 bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <action.icon size={16} className="text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{action.title}</p>
+                    <p className="text-xs text-muted-foreground">{action.sub}</p>
+                  </div>
+                  <ArrowRight size={14} className="text-muted-foreground ml-auto" />
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">Add New Product</p>
-                  <p className="text-xs text-muted-foreground">Upload a new fragrance to your store</p>
-                </div>
-                <ArrowRight size={14} className="text-muted-foreground ml-auto" />
-              </div>
-            </Link>
-            <Link href="/admin/products">
-              <div className="flex items-center gap-4 p-4 border border-border hover:border-primary transition-colors cursor-pointer group" data-testid="link-manage-products">
-                <div className="w-8 h-8 bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <Package size={16} className="text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">Manage Products</p>
-                  <p className="text-xs text-muted-foreground">Edit, delete or update your collection</p>
-                </div>
-                <ArrowRight size={14} className="text-muted-foreground ml-auto" />
-              </div>
-            </Link>
-            <Link href="/">
-              <div className="flex items-center gap-4 p-4 border border-border hover:border-primary transition-colors cursor-pointer group" data-testid="link-view-store">
-                <div className="w-8 h-8 bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <ArrowRight size={16} className="text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">View Storefront</p>
-                  <p className="text-xs text-muted-foreground">See your store as customers see it</p>
-                </div>
-                <ArrowRight size={14} className="text-muted-foreground ml-auto" />
-              </div>
-            </Link>
+              </Link>
+            ))}
           </div>
         </div>
       </div>

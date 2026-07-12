@@ -1,8 +1,19 @@
 import { Router, type IRouter } from "express";
 import multer from "multer";
 import { z } from "zod";
-import { db, productsTable, eq } from "@workspace/db";
+import { db, productsTable, salesTable, eq } from "@workspace/db";
+import type { Sale } from "@workspace/db/schema";
 import { requireAdmin } from "../middlewares/auth.js";
+import { salePercentFor } from "./sales.js";
+
+/** Live sales, or [] if the table is missing/unreachable so products never 500. */
+async function fetchSalesSafe(): Promise<Sale[]> {
+  try {
+    return await db.select().from(salesTable);
+  } catch {
+    return [];
+  }
+}
 
 const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -50,7 +61,8 @@ router.get("/products", async (req, res) => {
     const dbProducts = isAdmin
       ? await db.select().from(productsTable).orderBy(productsTable.createdAt)
       : await db.select().from(productsTable).where(eq(productsTable.inStock, true)).orderBy(productsTable.createdAt);
-    
+    const sales = await fetchSalesSafe();
+
     const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
     const host = req.get('host');
     const baseUrl = `${protocol}://${host}`;
@@ -59,8 +71,12 @@ router.get("/products", async (req, res) => {
       let imageCount = 0;
       try { imageCount = JSON.parse(p.images || "[]").length; } catch { /* ignore */ }
       const imageUrls = Array.from({ length: imageCount }, (_, i) => `${baseUrl}/api/images/product/${p.id}/${i}`);
+      const salePercent = salePercentFor(sales, p);
       return {
         ...p,
+        // A live sale overrides a smaller per-product discount, never shrinks it
+        discountPercent: Math.max(p.discountPercent, salePercent),
+        onSale: salePercent > p.discountPercent && salePercent > 0,
         imageUrl: imageUrls[0] || (p.imageUrl?.startsWith('/') ? `${baseUrl}${p.imageUrl}` : p.imageUrl),
         images: JSON.stringify(imageUrls),
       };
@@ -87,9 +103,13 @@ router.get("/products/:id", async (req, res) => {
     let imageCount = 0;
     try { imageCount = JSON.parse(dbProduct.images || "[]").length; } catch { /* ignore */ }
     const imageUrls = Array.from({ length: imageCount }, (_, i) => `${baseUrl}/api/images/product/${dbProduct.id}/${i}`);
-    
+    const sales = await fetchSalesSafe();
+    const salePercent = salePercentFor(sales, dbProduct);
+
     const product = {
       ...dbProduct,
+      discountPercent: Math.max(dbProduct.discountPercent, salePercent),
+      onSale: salePercent > dbProduct.discountPercent && salePercent > 0,
       imageUrl: imageUrls[0] || (dbProduct.imageUrl?.startsWith('/') ? `${baseUrl}${dbProduct.imageUrl}` : dbProduct.imageUrl),
       images: JSON.stringify(imageUrls),
     };

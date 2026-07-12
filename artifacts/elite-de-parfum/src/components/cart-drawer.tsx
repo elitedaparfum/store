@@ -1,18 +1,63 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { X, Minus, Plus, Trash2, ShoppingBag, Ticket, Loader2 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useCart } from "@/context/cart";
+import { apiFetch } from "@/lib/api";
 import { Link } from "wouter";
+
+interface AppliedDiscount {
+  code: string;
+  discountAmount: number;
+  total: number;
+}
 
 export function CartDrawer() {
   const { items, isOpen, closeCart, totalItems, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
   const [agreed, setAgreed] = useState(false);
+  const [promoInput, setPromoInput] = useState("");
+  const [promoError, setPromoError] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [discount, setDiscount] = useState<AppliedDiscount | null>(null);
 
   // Reset agreement when cart closes
   useEffect(() => {
     if (!isOpen) setAgreed(false);
   }, [isOpen]);
+
+  // Re-validate the applied code whenever the subtotal changes
+  useEffect(() => {
+    if (!discount) return;
+    if (items.length === 0) { setDiscount(null); return; }
+    apiFetch("/api/discounts/validate", {
+      method: "POST",
+      body: JSON.stringify({ code: discount.code, subtotal: totalPrice }),
+    })
+      .then(d => setDiscount({ code: d.code, discountAmount: d.discountAmount, total: d.total }))
+      .catch(() => setDiscount(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalPrice, items.length]);
+
+  const applyPromo = async () => {
+    const code = promoInput.trim();
+    if (!code) return;
+    setPromoLoading(true);
+    setPromoError("");
+    try {
+      const d = await apiFetch("/api/discounts/validate", {
+        method: "POST",
+        body: JSON.stringify({ code, subtotal: totalPrice }),
+      });
+      setDiscount({ code: d.code, discountAmount: d.discountAmount, total: d.total });
+      setPromoInput("");
+    } catch (err) {
+      setPromoError(err instanceof Error ? err.message : "Invalid code");
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const finalTotal = discount ? discount.total : totalPrice;
 
   const buildWhatsAppMessage = () => {
     const lines = items.map(
@@ -23,11 +68,26 @@ export function CartDrawer() {
       "",
       ...lines,
       "",
-      `Order Total: $${totalPrice.toLocaleString()}`,
+      `Subtotal: $${totalPrice.toLocaleString()}`,
+      ...(discount ? [
+        `Promo Code: ${discount.code} (−$${discount.discountAmount.toLocaleString()})`,
+      ] : []),
+      `Order Total: $${finalTotal.toLocaleString()}`,
       "",
       "Please confirm availability and payment details. Thank you.",
     ].join("\n");
     return `https://wa.me/17866824792?text=${encodeURIComponent(message)}`;
+  };
+
+  const handleCheckout = () => {
+    // Count the redemption once the customer actually heads to WhatsApp
+    if (discount) {
+      apiFetch("/api/discounts/redeem", {
+        method: "POST",
+        body: JSON.stringify({ code: discount.code }),
+      }).catch(() => {});
+    }
+    closeCart();
   };
 
   return (
@@ -175,9 +235,65 @@ export function CartDrawer() {
             {/* Footer */}
             {items.length > 0 && (
               <div className="px-6 py-6 border-t border-border shrink-0 space-y-4 bg-card">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-widest text-muted-foreground font-mono">Order Total</span>
-                  <span className="font-serif text-2xl text-foreground">${totalPrice.toLocaleString()}</span>
+                {/* Promo code */}
+                {discount ? (
+                  <div className="flex items-center justify-between border border-primary/30 bg-primary/5 px-3 py-2.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Ticket size={14} className="text-primary shrink-0" />
+                      <span className="font-mono text-sm text-primary tracking-wider truncate">{discount.code}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">−${discount.discountAmount.toLocaleString()}</span>
+                    </div>
+                    <button
+                      onClick={() => setDiscount(null)}
+                      className="text-muted-foreground hover:text-destructive transition-colors shrink-0 ml-2"
+                      data-testid="btn-remove-promo"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex">
+                      <input
+                        type="text"
+                        value={promoInput}
+                        onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(""); }}
+                        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); applyPromo(); } }}
+                        placeholder="PROMO CODE"
+                        className="flex-1 min-w-0 bg-background border border-border border-r-0 px-3 py-2.5 focus:outline-none focus:border-primary transition-colors text-foreground placeholder:text-muted-foreground/50 text-xs font-mono tracking-widest uppercase"
+                        data-testid="input-promo-code"
+                      />
+                      <button
+                        onClick={applyPromo}
+                        disabled={promoLoading || !promoInput.trim()}
+                        className="border border-primary text-primary px-4 py-2.5 uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 flex items-center gap-1.5"
+                        data-testid="btn-apply-promo"
+                      >
+                        {promoLoading && <Loader2 size={11} className="animate-spin" />}
+                        Apply
+                      </button>
+                    </div>
+                    {promoError && <p className="text-destructive text-[10px] mt-1.5 font-mono">{promoError}</p>}
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  {discount && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Subtotal</span>
+                        <span className="font-mono text-sm text-muted-foreground line-through">${totalPrice.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase tracking-widest text-primary font-mono">{discount.code}</span>
+                        <span className="font-mono text-sm text-primary">−${discount.discountAmount.toLocaleString()}</span>
+                      </div>
+                    </>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs uppercase tracking-widest text-muted-foreground font-mono">Order Total</span>
+                    <span className="font-serif text-2xl text-foreground" data-testid="cart-total">${finalTotal.toLocaleString()}</span>
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Shipping calculated upon confirmation. Local pickup available.
@@ -206,7 +322,7 @@ export function CartDrawer() {
                   href={agreed ? buildWhatsAppMessage() : undefined}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={agreed ? closeCart : e => e.preventDefault()}
+                  onClick={agreed ? handleCheckout : e => e.preventDefault()}
                   aria-disabled={!agreed}
                   className={`w-full py-4 flex items-center justify-center gap-3 uppercase tracking-widest text-sm font-semibold transition-all duration-200 ${agreed ? "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer" : "bg-muted text-muted-foreground cursor-not-allowed opacity-60"}`}
                   data-testid="btn-checkout-whatsapp"

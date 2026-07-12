@@ -8,8 +8,8 @@ export const apiUrl = (path: string) => `${base}${path}`;
 
 export async function apiFetch(path: string, options?: RequestInit) {
   const token = localStorage.getItem("auth_token");
-  const headers: HeadersInit = {
-    ...options?.headers,
+  const headers: Record<string, string> = {
+    ...(options?.headers as Record<string, string> | undefined),
   };
   
   // Set default JSON content type if sending a JSON string body
