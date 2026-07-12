@@ -5,7 +5,7 @@ import { Helmet } from "react-helmet-async";
 import { ArrowRight, Play } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 
-/** Frame (seconds) shown as the still when autoplay is blocked (e.g. iOS Low Power Mode). */
+/** Frame the pre-rendered `hero-poster.jpg` was captured at — kept in sync with that file. */
 const HERO_POSTER_TIME = 1.2;
 
 function HeroVideo() {
@@ -15,48 +15,79 @@ function HeroVideo() {
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+
+    // Anything other than "actively playing" surfaces the still + manual
+    // play control. This covers not just an initial autoplay refusal, but
+    // the OS pausing playback mid-stream — e.g. iOS suspending video
+    // decode the moment Low Power Mode is toggled on. Without a listener
+    // for that, the video would freeze with no way to resume short of a
+    // page reload.
+    const markBlocked = () => setBlocked(true);
+    const markPlaying = () => setBlocked(false);
+
     const tryPlay = () => {
       const p = video.play();
-      if (p !== undefined) {
-        p.catch(() => {
-          // Autoplay refused — park on a chosen frame and offer manual play
-          video.currentTime = HERO_POSTER_TIME;
-          setBlocked(true);
-        });
-      }
+      if (p !== undefined) p.catch(markBlocked);
     };
+
+    video.addEventListener("pause", markBlocked);
+    video.addEventListener("error", markBlocked);
+    video.addEventListener("playing", markPlaying);
+
     if (video.readyState >= 2) tryPlay();
     else video.addEventListener("canplay", tryPlay, { once: true });
-    return () => video.removeEventListener("canplay", tryPlay);
+
+    return () => {
+      video.removeEventListener("canplay", tryPlay);
+      video.removeEventListener("pause", markBlocked);
+      video.removeEventListener("error", markBlocked);
+      video.removeEventListener("playing", markPlaying);
+    };
   }, []);
 
   const handleManualPlay = () => {
-    videoRef.current?.play().then(() => setBlocked(false)).catch(() => {});
+    videoRef.current?.play().catch(() => {});
   };
 
   return (
-    <>
+    // z-index bumped above the hero copy's z-10 layer while blocked — a
+    // nested z-20 on the button alone can't escape this div's z-0 stacking
+    // context, which left the old "play" button rendered but unclickable
+    // (the text layer silently ate every tap).
+    <div className={`absolute inset-0 ${blocked ? "z-20" : "z-0"}`}>
       <video
         ref={videoRef}
         src="/hero-video.mp4"
+        poster="/images/hero-poster.jpg"
         muted
         loop
         playsInline
         preload="auto"
         className="w-full h-full object-cover object-center"
       />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent pointer-events-none" />
       {blocked && (
-        <button
-          onClick={handleManualPlay}
-          aria-label="Play film"
-          className="absolute inset-0 z-20 flex items-center justify-center group/play cursor-pointer"
-        >
-          <span className="w-20 h-20 rounded-full border border-foreground/40 bg-background/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group-hover/play:border-primary group-hover/play:bg-background/50">
-            <Play size={22} className="text-foreground ml-1 transition-colors duration-300 group-hover/play:text-primary" fill="currentColor" />
-          </span>
-        </button>
+        <>
+          {/* Guaranteed-to-render still — an <img> never depends on video
+              decode succeeding, so the hero can never go visually blank. */}
+          <img
+            src="/images/hero-poster.jpg"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+          />
+          <button
+            onClick={handleManualPlay}
+            aria-label="Play film"
+            className="absolute inset-0 z-10 flex items-center justify-center group/play cursor-pointer"
+          >
+            <span className="w-20 h-20 rounded-full border border-foreground/40 bg-background/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group-hover/play:border-primary group-hover/play:bg-background/50">
+              <Play size={22} className="text-foreground ml-1 transition-colors duration-300 group-hover/play:text-primary" fill="currentColor" />
+            </span>
+          </button>
+        </>
       )}
-    </>
+    </div>
   );
 }
 
@@ -137,10 +168,7 @@ export default function Home() {
 
       {/* ── HERO ── */}
       <section className="relative h-screen min-h-[640px] w-full overflow-hidden flex items-end">
-        <div className="absolute inset-0 z-0">
-          <HeroVideo />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent pointer-events-none" />
-        </div>
+        <HeroVideo />
 
         <div className="relative z-10 w-full px-6 sm:px-10 lg:px-16 pb-20 sm:pb-24 lg:pb-28">
           <motion.div
