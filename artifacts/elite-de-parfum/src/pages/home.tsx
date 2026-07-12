@@ -5,8 +5,10 @@ import { Helmet } from "react-helmet-async";
 import { ArrowRight, Play } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 
-/** Frame the pre-rendered `hero-poster.jpg` was captured at — kept in sync with that file. */
-const HERO_POSTER_TIME = 1.2;
+/** How long to wait after mount before assuming autoplay is stuck (some
+ *  mobile browsers leave the play() promise pending indefinitely rather
+ *  than rejecting it, e.g. certain iOS versions under Low Power Mode). */
+const AUTOPLAY_TIMEOUT_MS = 1800;
 
 function HeroVideo() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -33,15 +35,32 @@ function HeroVideo() {
     video.addEventListener("pause", markBlocked);
     video.addEventListener("error", markBlocked);
     video.addEventListener("playing", markPlaying);
+    // Retry on these too: some mobile browsers only make the element
+    // playable well after mount, and a duplicate play() call on an
+    // already-playing video is a harmless no-op.
+    video.addEventListener("loadedmetadata", tryPlay);
+    video.addEventListener("canplay", tryPlay);
 
-    if (video.readyState >= 2) tryPlay();
-    else video.addEventListener("canplay", tryPlay, { once: true });
+    // Attempt immediately rather than waiting on readyState/canplay — on
+    // constrained mobile connections a plain <video> (vs. one carrying the
+    // native `autoplay` attribute) can be deprioritized for preloading, so
+    // canplay may fire very late or not at all, meaning autoplay would
+    // otherwise never even be attempted.
+    tryPlay();
+
+    // Backstop: if playback still hasn't started after a moment, treat it
+    // as blocked regardless of whether the play() promise ever settles.
+    const fallbackTimer = window.setTimeout(() => {
+      if (video.paused) markBlocked();
+    }, AUTOPLAY_TIMEOUT_MS);
 
     return () => {
-      video.removeEventListener("canplay", tryPlay);
       video.removeEventListener("pause", markBlocked);
       video.removeEventListener("error", markBlocked);
       video.removeEventListener("playing", markPlaying);
+      video.removeEventListener("loadedmetadata", tryPlay);
+      video.removeEventListener("canplay", tryPlay);
+      window.clearTimeout(fallbackTimer);
     };
   }, []);
 
@@ -50,44 +69,51 @@ function HeroVideo() {
   };
 
   return (
-    // z-index bumped above the hero copy's z-10 layer while blocked — a
-    // nested z-20 on the button alone can't escape this div's z-0 stacking
-    // context, which left the old "play" button rendered but unclickable
-    // (the text layer silently ate every tap).
-    <div className={`absolute inset-0 ${blocked ? "z-20" : "z-0"}`}>
-      <video
-        ref={videoRef}
-        src="/hero-video.mp4"
-        poster="/images/hero-poster.jpg"
-        muted
-        loop
-        playsInline
-        preload="auto"
-        className="w-full h-full object-cover object-center"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent pointer-events-none" />
-      {blocked && (
-        <>
-          {/* Guaranteed-to-render still — an <img> never depends on video
-              decode succeeding, so the hero can never go visually blank. */}
+    <>
+      {/* Background layer stays behind the hero copy (z-10) at all times —
+          identical whether the video is playing or the fallback still is
+          showing, so the marketing text is never obscured. */}
+      <div className="absolute inset-0 z-0">
+        <video
+          ref={videoRef}
+          src="/hero-video.mp4"
+          poster="/images/hero-poster.jpg"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="w-full h-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent pointer-events-none" />
+        {blocked && (
+          // Guaranteed-to-render still — an <img> never depends on video
+          // decode succeeding, so the hero can never go visually blank.
           <img
             src="/images/hero-poster.jpg"
             alt=""
             aria-hidden="true"
             className="absolute inset-0 w-full h-full object-cover object-center"
           />
-          <button
-            onClick={handleManualPlay}
-            aria-label="Play film"
-            className="absolute inset-0 z-10 flex items-center justify-center group/play cursor-pointer"
-          >
-            <span className="w-20 h-20 rounded-full border border-foreground/40 bg-background/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group-hover/play:border-primary group-hover/play:bg-background/50">
-              <Play size={22} className="text-foreground ml-1 transition-colors duration-300 group-hover/play:text-primary" fill="currentColor" />
-            </span>
-          </button>
-        </>
+        )}
+      </div>
+
+      {/* Rendered as a sibling of the z-10 text layer (not nested inside
+          the z-0 background div above), so its z-20 genuinely stacks above
+          the hero copy instead of being trapped in a lower stacking
+          context — the old full-screen button sat under the text and
+          silently ate no taps at all. */}
+      {blocked && (
+        <button
+          onClick={handleManualPlay}
+          aria-label="Play video"
+          className="absolute z-20 bottom-6 right-6 sm:bottom-10 sm:right-10 inline-flex items-center gap-2.5 border border-primary/70 bg-background/40 backdrop-blur-sm px-5 py-3 text-primary uppercase tracking-[0.3em] text-[10px] font-mono transition-colors duration-300 hover:bg-primary hover:text-primary-foreground cursor-pointer"
+        >
+          <Play size={10} fill="currentColor" />
+          Play Video
+        </button>
       )}
-    </div>
+    </>
   );
 }
 
